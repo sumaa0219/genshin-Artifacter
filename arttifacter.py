@@ -16,9 +16,9 @@ OptinInfoData = pd.read_csv("./assetData/OptionInfo.csv", header=None).values.to
 WeapoInfo = pd.read_csv("./assetData/weaponInfo.csv", header=None).values.tolist()
 CharaInfo = pd.read_csv("./assetData/chara.csv", header=None).values.tolist()
 TravereInfo = pd.read_csv("./assetData/TravererSkilMap.csv", header=None).values.tolist()
-with open('./assetData/ApiDataMap.json', 'r') as json_file:
+with open('./assetData/ApiDataMap.json', 'r', encoding="utf-8") as json_file:
     datamap = json.load(json_file)
-with open('./assetData/namecards.json', 'r') as json_file:
+with open('./assetData/namecards.json', 'r', encoding="utf-8") as json_file:
     namecardmap = json.load(json_file)
 
 baseAvatar = "https://enka.network/ui/UI_AvatarIcon_"

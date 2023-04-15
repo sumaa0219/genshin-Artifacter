@@ -4,12 +4,13 @@ from discord.ext import commands
 from discord import ui
 import os
 from dotenv import load_dotenv
-import arttifacter
+import artifacter2 as arttifacter 
 import pandas as pd
 import asyncio
 import time
 import ArtifacterImageGen.Generater as gen
 import csv
+import json
 
 load_dotenv()
 
@@ -18,12 +19,17 @@ TOKEN = os.environ['token']
 
 
 servers = [425854769668816896]
+baseURL = "https://enka.network/ui/"
 
 
 CharacterInfodata = pd.read_csv("./assetData/CharacterInfo.csv", header=None).values.tolist()
 CharaInfo = pd.read_csv("./assetData/chara.csv", header=None).values.tolist()
 
+with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_file:
+    characters = json.load(json_file)
 
+with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
+    nameItem = json.load(json_file)
 
 
 
@@ -91,8 +97,8 @@ class InputUID(ui.Modal):
 
 
 
-            global DataBase,showAvatarlist,AvatarINFOlist,PlayerInfo
-            DataBase,showAvatarlist,AvatarINFOlist,PlayerInfo = arttifacter.getData(int(self.uid.value))
+            global DataBase,showAvatarlist,PlayerInfo
+            DataBase,showAvatarlist,PlayerInfo = arttifacter.getData(int(self.uid.value))
 
             embed = discord.Embed(title=PlayerInfo[0], color=discord.Color.blurple())
             embed.set_thumbnail(url=PlayerInfo[4])
@@ -109,24 +115,34 @@ class InputUID(ui.Modal):
             global selectStatus
             # selectStatus = 0
 
+            # for x in showAvatarlist:
+            #     charaID = DataBase[int(DataBase[x]["avatarId"])]
+            #     charaLv = DataBase[int(DataBase[x]["level"])]
+            #     for y in CharacterInfodata:
+            #         if y[0] == charaID:
+            #             charaName = y[2]
+            #         else:
+            #             pass
+            #     showCharaNameList.append(charaName)
+            #     showCharaLevelList.append(charaLv)
+
             for x in showAvatarlist:
-                charaID = DataBase[int(DataBase[x]["avatarId"])]
-                charaLv = DataBase[int(DataBase[x]["level"])]
-                for y in CharacterInfodata:
-                    if y[0] == charaID:
-                        charaName = y[2]
-                    else:
-                        pass
+                charaID = x["avatarId"]
+                HashID = characters[str(charaID)]["NameTextMapHash"]
+                charaName = nameItem["ja"][str(HashID)]
+                charaLv = x["level"]
                 showCharaNameList.append(charaName)
                 showCharaLevelList.append(charaLv)
-
-            for x in range(len(showCharaNameList)):
-                view.selectMenu.add_option(
-                    label=showCharaNameList[x],
-                    description="Lv:"+ str(showCharaLevelList[x]),
-                    value=showAvatarlist[x],
-                )
+                
             
+
+            for i,x in enumerate(showCharaNameList):
+                view.selectMenu.add_option(
+                    label=x,
+                    description="Lv:"+ str(showCharaLevelList[i]),
+                    value=i,
+                )
+
 
             await interaction.response.send_message(embeds=[embed],view=view)
 
@@ -150,12 +166,17 @@ class SelectCharacter(ui.View):
         if interaction.user.id == defaultUser:
             view = SelectScoreState()
             embed = discord.Embed(title=PlayerInfo[0], color=discord.Color.blurple())
-            for x in CharaInfo:
-                baseAvatar = "https://enka.network/ui/UI_AvatarIcon_"
-                if x[0] == DataBase[int(DataBase[int(select.values[0])]["avatarId"])]:
-                    AvatarNameURL = baseAvatar + x[1] + ".png"
-                else:
-                    pass
+
+            global showAvatarlist,showAvatarData 
+            ProfileAvatarID = showAvatarlist[int(select.values[0])]["avatarId"]
+            showAvatarData = showAvatarlist[int(select.values[0])]
+
+
+
+            ProfileAvatarname = characters[str(ProfileAvatarID)]["SideIconName"]
+            name = ProfileAvatarname.split("_")
+            AvatarNameURL = baseURL + name[0] + "_" +name[1]+"_"+name[3]+".png"
+
             global selectCharacterID
             selectCharacterID = select.values[0]
             embed.set_image(url=AvatarNameURL)
@@ -180,39 +201,24 @@ class SelectScoreState(ui.View):
     )
     async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
         if interaction.user.id == defaultUser:
-            global selectCharacterID,selectID
+            global selectCharacterID,DataBase
+            DataBase = DataBase[int(selectCharacterID)]
             ScoreState = select.values[0]
-            selectID = DataBase[int(selectCharacterID)]["avatarId"]
+            selectCharaID = showAvatarlist[int(selectCharacterID)]["avatarId"]
+            selectCharaHashID = characters[str(selectCharaID)]["NameTextMapHash"]
  
             # print(AvatarINFOlist)
             # print(ScoreState)
             global Name
-            Name = DataBase[selectID]
-            for x in CharacterInfodata:
-                if Name == x[0]:
-                    if Name == 10000005 or Name == 10000007:#主人公の元素判断
-                        TravererSklillId = DataBase[int(DataBase[int(AvatarInfo["inherentProudSkillList"])][0])]
-                        for y in TravereInfo:
-                            if int(y[1]) == int(TravererSklillId):
-                                print("getElment")
-                                Element = y[0]
-                            else:
-                                pass
-                    
-                        Name = x[2] +"(" + Element +")"
-
-                    elif Name == 10000041 and int(defaultUser) == 672094270072553533:
-                        Name = x[2] + "(ゴリラ)"
-                        Element = x[3]
-
-
-                    else:
-                        Name = x[2]
-                        Element = x[3]
-                else:
-                    pass
+            Name = nameItem["ja"][str(selectCharaHashID)]
+            if Name == "旅人":#主人公の元素判断
+                TravelerElementID = DataBase["skillDepotId"]
+                TravelerElement = characters[str(selectCharaID) + "-" + str(TravelerElementID)]["Element"]
+                Element = arttifacter.transeElement(TravelerElement)
+                Name = Name + "(" + Element + ")"
+                
             
-            arttifacter.genJson(DataBase,int(selectID),AvatarINFOlist,ScoreState,defaultUser)
+            arttifacter.genJson(DataBase,showAvatarData,ScoreState)
             time.sleep(0.3)
             await interaction.response.defer(thinking=True)
             generate()
