@@ -22,8 +22,7 @@ servers = [425854769668816896]
 baseURL = "https://enka.network/ui/"
 
 
-CharacterInfodata = pd.read_csv("./assetData/CharacterInfo.csv", header=None).values.tolist()
-CharaInfo = pd.read_csv("./assetData/chara.csv", header=None).values.tolist()
+
 
 with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_file:
     characters = json.load(json_file)
@@ -113,18 +112,6 @@ class InputUID(ui.Modal):
             showCharaLevelList = []
 
             global selectStatus
-            # selectStatus = 0
-
-            # for x in showAvatarlist:
-            #     charaID = DataBase[int(DataBase[x]["avatarId"])]
-            #     charaLv = DataBase[int(DataBase[x]["level"])]
-            #     for y in CharacterInfodata:
-            #         if y[0] == charaID:
-            #             charaName = y[2]
-            #         else:
-            #             pass
-            #     showCharaNameList.append(charaName)
-            #     showCharaLevelList.append(charaLv)
 
             for x in showAvatarlist:
                 charaID = x["avatarId"]
