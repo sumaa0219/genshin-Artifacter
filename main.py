@@ -255,6 +255,21 @@ async def say_command(interaction: discord.Interaction,text:str):
  
     await interaction.response.send_message(text)
 
+@tree.command(name="delete_messages",description="Deletes the last 10 messages by a specific user.",)
+async def delete_messages(interaction: discord.Interaction, member: discord.Member, limit: int):
+    await interaction.response.defer()
+    maxcuount = 0
+    async for message in interaction.channel.history(limit=200):
+            if message.author == member and maxcuount < limit:
+                await message.delete()
+                maxcuount += 1
+                time.sleep(0.5)
+    await interaction.followup.send(
+        f"{member.display_name}'s last {limit} messages deleted."
+    )
+
+
+
 
 
 
