@@ -11,6 +11,7 @@ import time
 import ArtifacterImageGen.Generater as gen
 import csv
 import json
+import requests
 
 load_dotenv()
 
@@ -268,6 +269,13 @@ async def delete_messages(interaction: discord.Interaction, member: discord.Memb
         f"{member.display_name}'s last {limit} messages deleted."
     )
 
+
+@tree.command(name= "ip",description="get ip")
+@app_commands.check(is_bot)
+async def say_command(interaction: discord.Interaction):
+    res = requests.get('https://ifconfig.me')
+
+    await interaction.response.send_message(res.text)
 
 
 
