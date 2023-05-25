@@ -247,7 +247,11 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState):
     #WeaponLevel
     WeaponLevel = WeaponBaseData["level"]
     #WeaponRank
-    WeaponRank = int(WeaponBaseData["affixMap"]["1" + str(Weapon["itemId"])])+1
+    try:
+        WeaponRank = int(WeaponBaseData["affixMap"]["1" + str(Weapon["itemId"])])+1
+    except:
+        WeaponRank = 1
+    
     #WeaponStatusBaseData
     WeaponStatusBaseData = Weapon["flat"]
     #WeaponRarelity
@@ -675,12 +679,19 @@ def genJson(DataBase,showAvatarData,ScoreState):
 
 
 
-    for x in addArtifact:
-        AllArtifacts += x+","
-    artifact = '"Artifacts":{' +AllArtifacts
+    for i,x in enumerate(addArtifact):
+        if i == len(addArtifact) -1:
+            AllArtifacts += x
+        else:
+            AllArtifacts += x+","
+        
+    artifact = '"Artifacts":{' +AllArtifacts + "}"
+
     
 
     jsonCode = BASE[:-1]+","+artifact[:-1]+"},"+Element[1:]
+
+    print(jsonCode)
 
     with open('ArtifacterImageGen/data.json', 'w',encoding='utf-8') as f:
         f.write(jsonCode)
