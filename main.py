@@ -67,16 +67,12 @@ class InputUID(ui.Modal):
             wronFlag = 0
             for x in User_UID_Data:
                 if x[0] == interaction.user.id:#ID同じ場合
-                    print("justID")
                     if int(x[1]) == int(self.uid.value): #同じかつUIDが同じ場合
-                        print("same_all")
                         data=[x[0],x[1]]
                     elif int(x[1]) is not  int(self.uid.value):#UIDだけ違う場合
                         data=[x[0],int(self.uid.value)]
-                        print("same_user")
                     dataSet.append(data)
                 else:#IDが違う
-                    print("diffrent")
                     wronFlag += 1
                     data=[x[0],x[1]]
                     dataSet.append(data)

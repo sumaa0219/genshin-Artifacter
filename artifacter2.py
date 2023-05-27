@@ -184,16 +184,26 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState):
     ElementChargeEfficiency = StatusMap["23"]*100
     #skillLevel
     SkillLevelMap=DataBase["skillLevelMap"]
-    TalentDataMap = characterDataBase["SkillOrder"]
+    TalentDataMap = characterDataBase["SkillOrder"]   
     #TalentBaseLevel
     TalentBase = TalentDataMap[0]
     TalentBaseLevel = SkillLevelMap[str(TalentBase)]
     #TalentExtraLevel
     TalentExtra = TalentDataMap[1]
-    TalentExtraLevel = SkillLevelMap[str(TalentExtra)]
+    BootsExtraSkillLevelID = characterDataBase["ProudMap"][str(TalentExtra)]
+    try:
+        BootsExtraSkillLevel = DataBase["proudSkillExtraLevelMap"][str(BootsExtraSkillLevelID)]
+    except:
+        BootsExtraSkillLevel = 0
+    TalentExtraLevel = int(SkillLevelMap[str(TalentExtra)]) + int(BootsExtraSkillLevel)
     #TalentBurstLevel
     TalentBurst = TalentDataMap[2]
-    TalentBurstLevel = SkillLevelMap[str(TalentBurst)]
+    BootsBurstSkillLevelID = characterDataBase["ProudMap"][str(TalentBurst)]
+    try:
+        BootsBurstSkillLevel = DataBase["proudSkillExtraLevelMap"][str(BootsBurstSkillLevelID)]
+    except:
+        BootsBurstSkillLevel = 0
+    TalentBurstLevel = int(SkillLevelMap[str(TalentBurst)]) + int(BootsBurstSkillLevel)
    
 
 
@@ -691,7 +701,6 @@ def genJson(DataBase,showAvatarData,ScoreState):
 
     jsonCode = BASE[:-1]+","+artifact[:-1]+"},"+Element[1:]
 
-    print(jsonCode)
 
     with open('ArtifacterImageGen/data.json', 'w',encoding='utf-8') as f:
         f.write(jsonCode)
