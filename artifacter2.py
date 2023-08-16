@@ -86,17 +86,21 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState):
     characterDataBase = characters[str(selectCharaID)]
     selectCharaHashID = characterDataBase["NameTextMapHash"]
     Name = nameItem["ja"][str(selectCharaHashID)]
-    print(Name)
     if Name == "旅人":#主人公の元素判断
         TravelerElementID = DataBase["skillDepotId"]
         characterDataBase = characters[str(selectCharaID) + "-" + str(TravelerElementID)]
-        print(characterDataBase)
+        # print(characterDataBase)
         TravelerElement = characterDataBase["Element"]
         Element = transeElement(TravelerElement)
+        if selectCharaID == 10000005:
+            Name = "空"
+        else:
+            Name = "蛍"
         Name = Name + "(" + Element + ")"
     else:#主人公じゃない場合元素を取得
         CharaElement = characters[str(selectCharaID)]["Element"]
         Element = transeElement(CharaElement)
+    print(Name)
     
     #const
     try:
