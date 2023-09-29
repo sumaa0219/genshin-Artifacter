@@ -5,16 +5,16 @@ import time
 
 baseURL = "https://enka.network/ui/"
 
-with open('./API-docs/store/namecards.json', 'r', encoding="utf-8") as json_file:
+with open('API-docs/store/namecards.json', 'r', encoding="utf-8") as json_file:
     namecard = json.load(json_file)
 
-with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_file:
+with open('API-docs/store/characters.json', 'r', encoding="utf-8") as json_file:
     characters = json.load(json_file)
 
-with open('./assetData/OptionInfo.json', 'r', encoding="utf-8") as json_file:
+with open('assetData/OptionInfo.json', 'r', encoding="utf-8") as json_file:
     OptionName = json.load(json_file)
 
-with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
+with open('API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
     nameItem = json.load(json_file)
 
 def transeElement(Element):
