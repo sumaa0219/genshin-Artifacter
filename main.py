@@ -13,6 +13,9 @@ import csv
 import json
 import requests
 import datetime
+from PIL import Image
+import shutil
+from io import BytesIO
 
 load_dotenv()
 
@@ -382,6 +385,15 @@ async def select(interaction:discord.Interaction,photurl:str ):
     modal = InputUID()
     await interaction.response.send_modal(modal)
 
+@tree.command(name = "deletefavoritecharacter",description="オリジナルの画像を削除します")
+async def delselect(interaction:discord.Interaction ):
+    User_UID_Data = pd.read_csv("./assetData/user_UID_data.csv", header=None).values.tolist()
+    for i,x in enumerate(User_UID_Data):
+        if interaction.user.id == x[0]:
+            shutil.rmtree("ArtifacterImageGen/character/"+x[2]+"("+ interaction.user.name+")")
+            User_UID_Data[i][2] = None
+            pd.DataFrame(User_UID_Data).to_csv("./assetData/user_UID_data.csv", index=False, header=False)
+
 
 
 def update_task():
@@ -390,10 +402,6 @@ def update_task():
         taskList = json.load(json_file)
 
 def setOriginalCharacter(url,mode,Name,userName,beforName=None):
-    from PIL import Image
-    import shutil
-    from io import BytesIO
-
     # 透過背景の画像を作成
     background = Image.new("RGBA", (2048,1024), (0, 0, 0, 0))
 
