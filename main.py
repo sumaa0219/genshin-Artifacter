@@ -40,6 +40,7 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 flag = 0
 defaultUID = None
+modeFlag = 0
 
 @client.event
 async def on_ready():
@@ -95,17 +96,17 @@ class InputUID(ui.Modal):
             for x in User_UID_Data:
                 if x[0] == interaction.user.id:#ID同じ場合
                     if int(x[1]) == int(self.uid.value): #同じかつUIDが同じ場合
-                        data=[x[0],x[1]]
+                        data=[x[0],x[1],x[2]]
                     elif int(x[1]) is not  int(self.uid.value):#UIDだけ違う場合
-                        data=[x[0],int(self.uid.value)]
+                        data=[x[0],int(self.uid.value),x[2]]
                     dataSet.append(data)
                 else:#IDが違う
                     wronFlag += 1
-                    data=[x[0],x[1]]
+                    data=[x[0],x[1],x[2]]
                     dataSet.append(data)
             
             if wronFlag == len(User_UID_Data):
-                data = [interaction.user.id,self.uid.value]
+                data = [interaction.user.id,self.uid.value,None]
                 dataSet.append(data)
                 print("newID")
 
@@ -175,23 +176,51 @@ class SelectCharacter(ui.View):
     )
     async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
         if interaction.user.id == defaultUser:
-            view = SelectScoreState()
-            embed = discord.Embed(title=PlayerInfo[0], color=discord.Color.blurple())
+            global modeFlag
 
-            global showAvatarlist,showAvatarData 
-            ProfileAvatarID = showAvatarlist[int(select.values[0])]["avatarId"]
-            showAvatarData = showAvatarlist[int(select.values[0])]
+            if modeFlag == 0:
+                view = SelectScoreState()
+                embed = discord.Embed(title=PlayerInfo[0], color=discord.Color.blurple())
+
+                global showAvatarlist,showAvatarData 
+                ProfileAvatarID = showAvatarlist[int(select.values[0])]["avatarId"]
+                showAvatarData = showAvatarlist[int(select.values[0])]
 
 
 
-            ProfileAvatarname = characters[str(ProfileAvatarID)]["SideIconName"]
-            name = ProfileAvatarname.split("_")
-            AvatarNameURL = baseURL + name[0] + "_" +name[1]+"_"+name[3]+".png"
+                ProfileAvatarname = characters[str(ProfileAvatarID)]["SideIconName"]
+                name = ProfileAvatarname.split("_")
+                AvatarNameURL = baseURL + name[0] + "_" +name[1]+"_"+name[3]+".png"
 
-            global selectCharacterID
-            selectCharacterID = select.values[0]
-            embed.set_image(url=AvatarNameURL)
-            await interaction.response.edit_message(embeds=[embed],view=view) 
+                global selectCharacterID
+                selectCharacterID = select.values[0]
+                embed.set_image(url=AvatarNameURL)
+                await interaction.response.edit_message(embeds=[embed],view=view) 
+
+
+            elif modeFlag ==1:
+                global DataBase,photoURL
+                selectCharacterID = select.values[0]
+                
+                DataBase = DataBase[int(selectCharacterID)]
+                ScoreState = select.values[0]
+                selectCharaID = showAvatarlist[int(selectCharacterID)]["avatarId"]
+                selectCharaHashID = characters[str(selectCharaID)]["NameTextMapHash"]
+                Name = nameItem["ja"][str(selectCharaHashID)]
+
+                User_UID_Data = pd.read_csv("./assetData/user_UID_data.csv", header=None).values.tolist()
+
+                for i,x in enumerate(User_UID_Data):
+                    if x[0] == user.id:
+                        if Name == x[2]:
+                            setOriginalCharacter(photoURL,1,Name,user.name)
+                        else:
+                            setOriginalCharacter(photoURL,2,Name,user.name,x[2])
+                            User_UID_Data[i][2] = Name
+                            pd.DataFrame(User_UID_Data).to_csv("./assetData/user_UID_data.csv", index=False, header=False)
+
+                await interaction.response.edit_message(content="変更完了しました",embed=None,view=None) 
+
         else:
             pass
 
@@ -228,8 +257,9 @@ class SelectScoreState(ui.View):
                 Element = arttifacter.transeElement(TravelerElement)
                 Name = Name + "(" + Element + ")"
                 
+            authorInfo = interaction.user
             
-            arttifacter.genJson(DataBase,showAvatarData,ScoreState)
+            arttifacter.genJson(DataBase,showAvatarData,ScoreState,authorInfo)
             time.sleep(0.3)
             await interaction.response.defer(thinking=True)
             generate()
@@ -250,7 +280,8 @@ async def build_command(interaction: discord.Interaction):
     print(interaction.user.id)
 
 
-    global defaultUID,defaultUser
+    global defaultUID,defaultUser,modeFlag
+    modeFlag = 0
     defaultUser = interaction.user.id
     defaultUID = None
     for x in User_UID_Data:
@@ -325,12 +356,95 @@ async def addTask(interaction:discord.Interaction,taskname:str,hour:str,minutes:
 async def addTask(ctx,taskname:str,hour:int,minutes:int,message:str ):
     pass
 
+@tree.command(name = "selectfavoritecharacter",description="ビルド生成時にオリジナルの画像を使用できるように登録します")
+async def select(interaction:discord.Interaction,photurl:str ):
+    global user,modeFlag,photoURL
+    photoURL = photurl
+    user = interaction.user
+    modeFlag = 1
+    User_UID_Data = pd.read_csv("./assetData/user_UID_data.csv", header=None).values.tolist()
+    print(interaction.user.id)
+
+
+    global defaultUID,defaultUser
+    defaultUser = interaction.user.id
+    defaultUID = None
+    for x in User_UID_Data:
+        
+        if x[0] == interaction.user.id:
+            defaultUID = x[1]
+            
+        else:
+            if defaultUID == None:
+                print("bbb")
+                defaultUID = None
+    # print(defaultUID)
+    modal = InputUID()
+    await interaction.response.send_modal(modal)
+
 
 
 def update_task():
     global taskList
     with open('assetData/task.json', 'r', encoding="utf-8") as json_file:
         taskList = json.load(json_file)
+
+def setOriginalCharacter(url,mode,Name,userName,beforName=None):
+    from PIL import Image
+    import shutil
+    from io import BytesIO
+
+    # 透過背景の画像を作成
+    background = Image.new("RGBA", (2048,1024), (0, 0, 0, 0))
+
+    # 画像を取得
+    response = requests.get(url)
+    image = Image.open(BytesIO(response.content))
+
+    # 画像がRGBAモードでない場合、RGBAモードに変換
+    if image.mode != "RGBA":
+        image = image.convert("RGBA")
+
+    # 新しい縦のサイズを指定
+    new_height = 1024
+
+    # 縦のサイズを新しいサイズに変更（横幅は自動調整）
+    original_width, original_height = image.size
+    new_width = int(original_width * (new_height / original_height))
+    resized_image = image.resize((new_width, new_height))
+
+    # 透過度情報がある場合のみ透過背景の中央に合成
+    if "A" in resized_image.getbands():
+        alpha = resized_image.split()[3]
+
+        # 透過背景の中央座標
+        center_x = (background.width - resized_image.width) // 2
+        center_y = (background.height - resized_image.height) // 2
+
+        background.paste(resized_image, (center_x, center_y), mask=alpha)
+    else:
+        # 透過背景の中央座標
+        center_x = (background.width - resized_image.width) // 2
+        center_y = (background.height - resized_image.height) // 2
+
+        background.paste(resized_image, (center_x, center_y))
+
+    save_path = "ArtifacterImageGen/character/" + Name + "(" + userName + ")/avatar.png"
+
+    if mode == 1: #変わらない
+        pass
+        # 保存するファイル名を指定
+        
+    elif mode == 2:
+        shutil.copytree("ArtifacterImageGen/character/"+Name, "ArtifacterImageGen/character/"+ Name +"("+ userName +")")
+        try:
+            shutil.rmtree("ArtifacterImageGen/character/"+beforName+"("+ userName+")")
+        except:
+            pass
+
+    # 画像を指定した名前で保存
+    background.save(save_path)
+
 
 
 

@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import json
 import time
+import discord
 
 baseURL = "https://enka.network/ui/"
 
@@ -16,6 +17,9 @@ with open('assetData/OptionInfo.json', 'r', encoding="utf-8") as json_file:
 
 with open('API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
     nameItem = json.load(json_file)
+
+
+GUID = 0
 
 def transeElement(Element):
     if Element == "Wind":
@@ -35,6 +39,8 @@ def transeElement(Element):
     
 
 def getData(UID):
+    global GUID
+    GUID = UID
     URL = "https://enka.network/api/uid/" + str(UID)
     print(URL)
     r=requests.get(URL)
@@ -76,9 +82,11 @@ def getData(UID):
 
     return DataBase,showAvatarlist,PlayerInfo
 
-def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState):
+def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
+    User_UID_Data = pd.read_csv("./assetData/user_UID_data.csv", header=None).values.tolist()
     
     StatusList = []
+    global GUID
     
     #CharacterStatus
     #name
@@ -100,6 +108,20 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState):
     else:#主人公じゃない場合元素を取得
         CharaElement = characters[str(selectCharaID)]["Element"]
         Element = transeElement(CharaElement)
+    
+    for i,x in enumerate(User_UID_Data):
+        if GUID == x[1]:
+            if Name == x[2]:
+                Name = Name +"("+authorInfo.name+")"
+                print(Name)
+            else:
+                print("unmatch")
+            
+
+
+
+
+
     print(Name)
     
     #const
@@ -458,8 +480,8 @@ def OutputScore(flower,wing,clock,cup,crown,State):
 
 
 
-def genJson(DataBase,showAvatarData,ScoreState):
-    status,weapon,flower,wing,clock,cup,crown,score,element = getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState)
+def genJson(DataBase,showAvatarData,ScoreState,authorInfo):
+    status,weapon,flower,wing,clock,cup,crown,score,element = getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo)
 
     global CostuneID
 
