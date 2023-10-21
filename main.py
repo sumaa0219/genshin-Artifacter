@@ -91,36 +91,32 @@ class InputUID(ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         global defaultUser
+       
         if interaction.user.id == defaultUser:
             User_UID_Data = pd.read_csv("./assetData/user_UID_data.csv", header=None).values.tolist()
+            print(User_UID_Data)
+            pd.set_option('display.float_format', lambda x: '%.0f' % x)
             data = []
             dataSet = []
             wronFlag = 0
-            for x in User_UID_Data:
+            for i,x in enumerate(User_UID_Data):
                 if x[0] == interaction.user.id:#ID同じ場合
                     if int(x[1]) == int(self.uid.value): #同じかつUIDが同じ場合
-                        data=[x[0],x[1],x[2]]
+                        pass
                     elif int(x[1]) is not  int(self.uid.value):#UIDだけ違う場合
-                        data=[x[0],int(self.uid.value),x[2]]
-                    dataSet.append(data)
+                        User_UID_Data[i][1] =  int(self.uid.value)
+                        pd.DataFrame(User_UID_Data).to_csv("./assetData/user_UID_data.csv", index=False, header=False)
                 else:#IDが違う
                     wronFlag += 1
-                    data=[x[0],x[1],x[2]]
-                    dataSet.append(data)
+                    
             
             if wronFlag == len(User_UID_Data):
-                data = [interaction.user.id,self.uid.value,None]
-                dataSet.append(data)
-                print("newID")
+                print("はじめて")
+                new = [int(interaction.user.id),int(self.uid.value),None]
+                User_UID_Data.append(new)
+                print(User_UID_Data)
 
-            with open('assetData/user_UID_data.csv', 'w', newline='') as file:
-                writer = csv.writer(file)
-                for row in dataSet:
-                    writer.writerow(row)
-
-            file.close()
-
-
+                pd.DataFrame(User_UID_Data).to_csv("./assetData/user_UID_data.csv", index=False, header=False)
 
 
 
@@ -291,7 +287,7 @@ async def build_command(interaction: discord.Interaction):
         
         if x[0] == interaction.user.id:
             defaultUID = x[1]
-            
+
         else:
             if defaultUID == None:
                 print("bbb")
@@ -390,9 +386,13 @@ async def delselect(interaction:discord.Interaction ):
     User_UID_Data = pd.read_csv("./assetData/user_UID_data.csv", header=None).values.tolist()
     for i,x in enumerate(User_UID_Data):
         if interaction.user.id == x[0]:
-            shutil.rmtree("ArtifacterImageGen/character/"+x[2]+"("+ interaction.user.name+")")
+            try:
+                shutil.rmtree("ArtifacterImageGen/character/"+x[2]+"("+ interaction.user.name+")")
+            except:
+                pass
             User_UID_Data[i][2] = None
             pd.DataFrame(User_UID_Data).to_csv("./assetData/user_UID_data.csv", index=False, header=False)
+            await interaction.response.send_message(content="削除完了しました")
 
 
 
