@@ -21,6 +21,7 @@ with open('API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
 
 GUID = 0
 
+
 def transeElement(Element):
     if Element == "Wind":
         return "風"
@@ -36,21 +37,19 @@ def transeElement(Element):
         return "炎"
     elif Element == "Water":
         return "水"
-    
+
 
 def getData(UID):
     global GUID
     GUID = UID
     URL = "https://enka.network/api/uid/" + str(UID)
     print(URL)
-    r=requests.get(URL)
+    r = requests.get(URL)
     response = r.json()
     DataBase = response["avatarInfoList"]
-    PlayerINFO = response["playerInfo"]      #プレイヤー情報目次
-
+    PlayerINFO = response["playerInfo"]  # プレイヤー情報目次
 
     PlayerInfo = []
-
 
     PlayerName = PlayerINFO["nickname"]
     PlayerLevel = PlayerINFO["level"]
@@ -62,12 +61,11 @@ def getData(UID):
     NameCardName = namecard[str(NameCardID)]["icon"]
     NameCardURL = baseURL + NameCardName + ".png"
 
-
     ProfileAvatarID = PlayerINFO["profilePicture"]["avatarId"]
 
     ProfileAvatarname = characters[str(ProfileAvatarID)]["SideIconName"]
     name = ProfileAvatarname.split("_")
-    AvatarNameURL = baseURL + name[0] + "_" +name[1]+"_"+name[3]+".png"
+    AvatarNameURL = baseURL + name[0] + "_" + name[1]+"_"+name[3]+".png"
 
     PlayerInfo.append(PlayerName)
     PlayerInfo.append(PlayerLevel)
@@ -76,27 +74,29 @@ def getData(UID):
     PlayerInfo.append(AvatarNameURL)
     showAvatarlist = showAvatarlistID
 
-
     # print(showAvatarlist)
     # print(AvatarINFOlist)
 
-    return DataBase,showAvatarlist,PlayerInfo
+    return DataBase, showAvatarlist, PlayerInfo
 
-def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
-    User_UID_Data = pd.read_csv("./assetData/user_UID_data.csv", header=None).values.tolist()
-    
+
+def getCharacterStatusfromselect(DataBase, showAvatarData, ScoreState, authorInfo):
+    User_UID_Data = pd.read_csv(
+        "./assetData/user_UID_data.csv", header=None).values.tolist()
+
     StatusList = []
     global GUID
-    
-    #CharacterStatus
-    #name
+
+    # CharacterStatus
+    # name
     selectCharaID = DataBase["avatarId"]
     characterDataBase = characters[str(selectCharaID)]
     selectCharaHashID = characterDataBase["NameTextMapHash"]
     Name = nameItem["ja"][str(selectCharaHashID)]
-    if Name == "旅人":#主人公の元素判断
+    if Name == "旅人":  # 主人公の元素判断
         TravelerElementID = DataBase["skillDepotId"]
-        characterDataBase = characters[str(selectCharaID) + "-" + str(TravelerElementID)]
+        characterDataBase = characters[str(
+            selectCharaID) + "-" + str(TravelerElementID)]
         # print(characterDataBase)
         TravelerElement = characterDataBase["Element"]
         Element = transeElement(TravelerElement)
@@ -105,53 +105,44 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
         else:
             Name = "蛍"
         Name = Name + "(" + Element + ")"
-    else:#主人公じゃない場合元素を取得
+    else:  # 主人公じゃない場合元素を取得
         CharaElement = characters[str(selectCharaID)]["Element"]
         Element = transeElement(CharaElement)
-    
-    for i,x in enumerate(User_UID_Data):
+
+    for i, x in enumerate(User_UID_Data):
         if GUID == x[1]:
             if Name == x[2]:
-                Name = Name +"("+authorInfo.name+")"
+                Name = Name + "("+authorInfo.name+")"
                 print(Name)
             else:
                 print("unmatch")
-            
-
-
-
-
 
     print(Name)
-    
-    #const
+
+    # const
     try:
         Const = len(DataBase["talentIdList"])
     except:
         Const = 0
-    #level
+    # level
     Level = showAvatarData["level"]
-    #costume
+    # costume
     try:
         global CostuneID
-        CostuneID= showAvatarData ["costumeId"]
+        CostuneID = showAvatarData["costumeId"]
     except:
         CostuneID = ""
         pass
 
-    
-
-
-
-    #love
+    # love
     Love = DataBase["fetterInfo"]["expLevel"]
-    
-    #statusmap
-    StatusMap=DataBase["fightPropMap"]
-    #HP
+
+    # statusmap
+    StatusMap = DataBase["fightPropMap"]
+    # HP
     BaseHP = StatusMap["1"]
     try:
-        artHP=StatusMap["2"]
+        artHP = StatusMap["2"]
     except:
         artHP = 0
     try:
@@ -159,7 +150,7 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
     except:
         artHPpersent = 0
     HP = BaseHP + (BaseHP*artHPpersent+artHP)
-    #attack
+    # attack
     BaseAttack = StatusMap["4"]
     try:
         artAttack = StatusMap["5"]
@@ -170,29 +161,30 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
     except:
         artAttackpersent = 0
     Attack = BaseAttack + (BaseAttack*artAttackpersent+artAttack)
-    #Defence
+    # Defence
     BaseDefence = StatusMap["7"]
-    try: 
+    try:
         artDefence = StatusMap["8"]
     except:
-        artDefence=0
+        artDefence = 0
     try:
         artDefencepersent = StatusMap["9"]
     except:
         artDefencepersent = 0
     Defence = BaseDefence + (BaseDefence*artDefencepersent+artDefence)
-    #ElemntalMastery
+    # ElemntalMastery
     ElemntalMastery = StatusMap["28"]
-    #CriticalPresent
+    # CriticalPresent
     CriticalPresent = StatusMap["20"]*100
-    #CriticalDamage
+    # CriticalDamage
     CriticalDamage = StatusMap["22"]*100
-    #ElementDamageBuff
+    # ElementDamageBuff
     buffname = ""
     count = 0
     buffvalue = 0
-    bufflist = [[30,"物理ダメージ"],[40,"炎元素ダメージ"],[41,"雷元素ダメージ"],[42,"水元素ダメージ"],[43,"草元素ダメージ"],[44,"風元素ダメージ"],[45,"岩元素ダメージ"],[46,"氷元素ダメージ"]]
-    for i,id in bufflist:
+    bufflist = [[30, "物理ダメージ"], [40, "炎元素ダメージ"], [41, "雷元素ダメージ"], [42, "水元素ダメージ"], [
+        43, "草元素ダメージ"], [44, "風元素ダメージ"], [45, "岩元素ダメージ"], [46, "氷元素ダメージ"]]
+    for i, id in bufflist:
         buffvalueDummy = StatusMap[str(i)] * 100
         if buffvalueDummy > 0 and buffvalue < buffvalueDummy:
             buffname = id
@@ -204,35 +196,34 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
         buffvalue = 0
         buffname = Element + "元素ダメージ"
 
-
-
-    #ElementChargeEfficiency
+    # ElementChargeEfficiency
     ElementChargeEfficiency = StatusMap["23"]*100
-    #skillLevel
-    SkillLevelMap=DataBase["skillLevelMap"]
-    TalentDataMap = characterDataBase["SkillOrder"]   
-    #TalentBaseLevel
+    # skillLevel
+    SkillLevelMap = DataBase["skillLevelMap"]
+    TalentDataMap = characterDataBase["SkillOrder"]
+    # TalentBaseLevel
     TalentBase = TalentDataMap[0]
     TalentBaseLevel = SkillLevelMap[str(TalentBase)]
-    #TalentExtraLevel
+    # TalentExtraLevel
     TalentExtra = TalentDataMap[1]
     BootsExtraSkillLevelID = characterDataBase["ProudMap"][str(TalentExtra)]
     try:
-        BootsExtraSkillLevel = DataBase["proudSkillExtraLevelMap"][str(BootsExtraSkillLevelID)]
+        BootsExtraSkillLevel = DataBase["proudSkillExtraLevelMap"][str(
+            BootsExtraSkillLevelID)]
     except:
         BootsExtraSkillLevel = 0
-    TalentExtraLevel = int(SkillLevelMap[str(TalentExtra)]) + int(BootsExtraSkillLevel)
-    #TalentBurstLevel
+    TalentExtraLevel = int(
+        SkillLevelMap[str(TalentExtra)]) + int(BootsExtraSkillLevel)
+    # TalentBurstLevel
     TalentBurst = TalentDataMap[2]
     BootsBurstSkillLevelID = characterDataBase["ProudMap"][str(TalentBurst)]
     try:
-        BootsBurstSkillLevel = DataBase["proudSkillExtraLevelMap"][str(BootsBurstSkillLevelID)]
+        BootsBurstSkillLevel = DataBase["proudSkillExtraLevelMap"][str(
+            BootsBurstSkillLevelID)]
     except:
         BootsBurstSkillLevel = 0
-    TalentBurstLevel = int(SkillLevelMap[str(TalentBurst)]) + int(BootsBurstSkillLevel)
-   
-
-
+    TalentBurstLevel = int(
+        SkillLevelMap[str(TalentBurst)]) + int(BootsBurstSkillLevel)
 
     StatusList.append(Name)
     StatusList.append(Const)
@@ -242,11 +233,11 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
     StatusList.append(round(Attack))
     StatusList.append(round(Defence))
     StatusList.append(round(ElemntalMastery))
-    StatusList.append(round(CriticalPresent,1))
-    StatusList.append(round(CriticalDamage,1))
-    StatusList.append(round(ElementChargeEfficiency,1))
+    StatusList.append(round(CriticalPresent, 1))
+    StatusList.append(round(CriticalDamage, 1))
+    StatusList.append(round(ElementChargeEfficiency, 1))
     StatusList.append(buffname)
-    StatusList.append(round(buffvalue,1))
+    StatusList.append(round(buffvalue, 1))
     StatusList.append(TalentBaseLevel)
     StatusList.append(TalentExtraLevel)
     StatusList.append(TalentBurstLevel)
@@ -254,58 +245,56 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
     StatusList.append(round(BaseAttack))
     StatusList.append(round(BaseDefence))
 
-
     print(StatusList)
 
-
-    #CharacterWeapon&ArtifactStatus
+    # CharacterWeapon&ArtifactStatus
     WeaponID = ""
     ArtifactID = []
     WeaponStatus = []
     for x in DataBase["equipList"]:
         try:
-            #聖遺物
+            # 聖遺物
             x["reliquary"]
             ArtifactID.append(x)
-            
+
         except:
-            #武器
+            # 武器
             x["weapon"]
             Weapon = x
-    
-    #WeaponStatus
-    #WeaponName
-    WeaponNameID = Weapon["flat"]["nameTextMapHash"]
-    WeaponName  = nameItem["ja"][str(WeaponNameID)]
 
-    #WeponBaseData
+    # WeaponStatus
+    # WeaponName
+    WeaponNameID = Weapon["flat"]["nameTextMapHash"]
+    WeaponName = nameItem["ja"][str(WeaponNameID)]
+
+    # WeponBaseData
     WeaponBaseData = Weapon["weapon"]
-    #WeaponLevel
+    # WeaponLevel
     WeaponLevel = WeaponBaseData["level"]
-    #WeaponRank
+    # WeaponRank
     try:
-        WeaponRank = int(WeaponBaseData["affixMap"]["1" + str(Weapon["itemId"])])+1
+        WeaponRank = int(WeaponBaseData["affixMap"]
+                         ["1" + str(Weapon["itemId"])])+1
     except:
         WeaponRank = 1
-    
-    #WeaponStatusBaseData
+
+    # WeaponStatusBaseData
     WeaponStatusBaseData = Weapon["flat"]
-    #WeaponRarelity
+    # WeaponRarelity
     WeaponRarelity = WeaponStatusBaseData["rankLevel"]
-    #WeaponBase
+    # WeaponBase
     WeapnBase = WeaponStatusBaseData["weaponStats"]
     for x in WeapnBase:
         if x["appendPropId"] == "FIGHT_PROP_BASE_ATTACK":
-            #WeaponBaseattack
+            # WeaponBaseattack
             WeaponBaseattack = x["statValue"]
         else:
-            #WeaponSubStatusName
+            # WeaponSubStatusName
             WeaponSubStatusName = x["appendPropId"]
             WeaponSubStatusName = nameItem["ja"][str(WeaponSubStatusName)]
 
-            #WeaponSubStatusValue
+            # WeaponSubStatusValue
             WeaponSubStatusValue = x["statValue"]
-
 
     WeaponStatus.append(WeaponName)
     WeaponStatus.append(WeaponLevel)
@@ -314,9 +303,9 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
     WeaponStatus.append(WeaponBaseattack)
     WeaponStatus.append(WeaponSubStatusName)
     WeaponStatus.append(WeaponSubStatusValue)
-    
+
     print(WeaponStatus)
-    
+
     Status = []
     flowerStatus = []
     wingStatus = []
@@ -338,49 +327,47 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
     # EQUIP_DRESS
 
     for x in ArtifactID:
-        #print(DataBase[x])
-        #TypeArtifact
+        # print(DataBase[x])
+        # TypeArtifact
         TypeArtifactID = x["flat"]["equipType"]
 
-
-        #ArtifactType
+        # ArtifactType
         setNameID = x["flat"]["setNameTextMapHash"]
-        ArtifactType = nameItem["ja"][setNameID]
-        #ArtifactLevel
-        level=x["reliquary"]["level"]
+        ArtifactType = nameItem["ja"][str(setNameID)]
+        # ArtifactLevel
+        level = x["reliquary"]["level"]
         ArtifactLevel = level - 1
-        #ArtifactRarelity
-        ArtifactRarelity=x["flat"]["rankLevel"]
-        #ArtifactMainOp
-        MainOpMap=x["flat"]["reliquaryMainstat"]
+        # ArtifactRarelity
+        ArtifactRarelity = x["flat"]["rankLevel"]
+        # ArtifactMainOp
+        MainOpMap = x["flat"]["reliquaryMainstat"]
         MainOpMapName = MainOpMap["mainPropId"]
         ArtifactMainOp = OptionName[str(MainOpMapName)]
 
-        #ArtifactMainValue
-        ArtifactMainValue=MainOpMap["statValue"]
-        #ArtifactSub
-        SubOpMap=x["flat"]["reliquarySubstats"]
+        # ArtifactMainValue
+        ArtifactMainValue = MainOpMap["statValue"]
+        # ArtifactSub
+        SubOpMap = x["flat"]["reliquarySubstats"]
         # print(SubOpMap)
-        #ArtifactSubOpName
-        for i,y in enumerate(SubOpMap):
-            
+        # ArtifactSubOpName
+        for i, y in enumerate(SubOpMap):
+
             OpName = y["appendPropId"]
             OpName = OptionName[str(OpName)]
-            #ArtifactSubOpValue
+            # ArtifactSubOpValue
             OpValue = y["statValue"]
             if i == 0:
                 ArtifactSub1Op = OpName
-                ArtifactSub1Value = OpValue 
+                ArtifactSub1Value = OpValue
             elif i == 1:
                 ArtifactSub2Op = OpName
-                ArtifactSub2Value = OpValue 
+                ArtifactSub2Value = OpValue
             elif i == 2:
                 ArtifactSub3Op = OpName
-                ArtifactSub3Value = OpValue 
+                ArtifactSub3Value = OpValue
             elif i == 3:
                 ArtifactSub4Op = OpName
                 ArtifactSub4Value = OpValue
-
 
         Status.append(ArtifactType)
         Status.append(ArtifactLevel)
@@ -396,7 +383,6 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
         Status.append(ArtifactSub4Op)
         Status.append(ArtifactSub4Value)
 
-
         if TypeArtifactID == "EQUIP_BRACER":
             flowerStatus = Status
         elif TypeArtifactID == "EQUIP_NECKLACE":
@@ -408,38 +394,29 @@ def getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo):
         elif TypeArtifactID == "EQUIP_DRESS":
             crownStatus = Status
 
-        
-
         Status = []
-    
+
     print(flowerStatus)
     print(wingStatus)
     print(clockStatus)
     print(cupStatus)
     print(crownStatus)
 
-    Score = OutputScore(flowerStatus,wingStatus,clockStatus,cupStatus,crownStatus,ScoreState)
+    Score = OutputScore(flowerStatus, wingStatus, clockStatus,
+                        cupStatus, crownStatus, ScoreState)
     print(Score)
     print(Element)
 
+    return StatusList, WeaponStatus, flowerStatus, wingStatus, clockStatus, cupStatus, crownStatus, Score, Element
 
 
-    
-    return StatusList,WeaponStatus,flowerStatus,wingStatus,clockStatus,cupStatus,crownStatus,Score,Element
-
-
-
-
-
-
-
-def calcScore(List,State):
+def calcScore(List, State):
     State_Value = 0
     Critical_percent = 0
     Critical_damege = 0
 
-    for i,x in enumerate(List):
-        
+    for i, x in enumerate(List):
+
         if i < 4:
             pass
         elif x == "会心率":
@@ -447,7 +424,7 @@ def calcScore(List,State):
         elif x == "会心ダメージ":
             Critical_damege = List[i+1]
         elif x == State:
-            
+
             if State == "元素熟知":
                 State_Value = List[i+1]/4
             elif State_Value != 0:
@@ -456,20 +433,21 @@ def calcScore(List,State):
                 State_Value = List[i+1]
 
     toal = Critical_damege + Critical_percent + State_Value
-    
-    return round(toal,1)
+
+    return round(toal, 1)
     # return toal
-            
-def OutputScore(flower,wing,clock,cup,crown,State):
+
+
+def OutputScore(flower, wing, clock, cup, crown, State):
     XX = []
     XX.append(State)
 
-    X1 = calcScore(flower,State)  
-    X2 = calcScore(wing,State)   
-    X3 = calcScore(clock,State) 
-    X4 = calcScore(cup,State)  
-    X5 = calcScore(crown,State) 
-    XX.append(round(X1+X2+X3+X4+X5,1))
+    X1 = calcScore(flower, State)
+    X2 = calcScore(wing, State)
+    X3 = calcScore(clock, State)
+    X4 = calcScore(cup, State)
+    X5 = calcScore(crown, State)
+    XX.append(round(X1+X2+X3+X4+X5, 1))
     XX.append(X1)
     XX.append(X2)
     XX.append(X3)
@@ -479,63 +457,63 @@ def OutputScore(flower,wing,clock,cup,crown,State):
     return XX
 
 
-
-def genJson(DataBase,showAvatarData,ScoreState,authorInfo):
-    status,weapon,flower,wing,clock,cup,crown,score,element = getCharacterStatusfromselect(DataBase,showAvatarData,ScoreState,authorInfo)
+def genJson(DataBase, showAvatarData, ScoreState, authorInfo):
+    status, weapon, flower, wing, clock, cup, crown, score, element = getCharacterStatusfromselect(
+        DataBase, showAvatarData, ScoreState, authorInfo)
 
     global CostuneID
 
-    BASE=json.dumps({
-    "uid":  0,
-    "input": "",
-    "Character": {
-        "Name": status[0],
-        "Const": status[1],
-        "Level": status[2],
-        "Love": status[3],
-        "Costume":CostuneID,
-        "Status": {
-            "HP": status[4],
-            "攻撃力": status[5],
-            "防御力": status[6],
-            "元素熟知": status[7],
-            "会心率": status[8],
-            "会心ダメージ": status[9],
-            "元素チャージ効率": status[10],
-            status[11]: status[12]
-        },
-        "Talent": {
-            "通常": status[13],
-            "スキル": status[14],
-            "爆発": status[15]
-        },
-        "Base": {
-            "HP": status[16],
-            "攻撃力": status[17],
-            "防御力": status[18]
-        }
+    BASE = json.dumps({
+        "uid":  0,
+        "input": "",
+        "Character": {
+            "Name": status[0],
+            "Const": status[1],
+            "Level": status[2],
+            "Love": status[3],
+            "Costume": CostuneID,
+            "Status": {
+                "HP": status[4],
+                "攻撃力": status[5],
+                "防御力": status[6],
+                "元素熟知": status[7],
+                "会心率": status[8],
+                "会心ダメージ": status[9],
+                "元素チャージ効率": status[10],
+                status[11]: status[12]
+            },
+            "Talent": {
+                "通常": status[13],
+                "スキル": status[14],
+                "爆発": status[15]
+            },
+            "Base": {
+                "HP": status[16],
+                "攻撃力": status[17],
+                "防御力": status[18]
+            }
 
-    },
-    "Weapon": {
-        "name": weapon[0],
-        "Level": weapon[1],
-        "totu": weapon[2],
-        "rarelity": weapon[3],
-        "BaseATK": weapon[4],
-        "Sub": {
-            "name": weapon[5],
-            "value": weapon[6]
-        }
-    },
-    "Score": {
-        "State": score[0],
-        "total": score[1],
-        "flower": score[2],
-        "wing": score[3],
-        "clock": score[4],
-        "cup": score[5],
-        "crown": score[6]
-    }}, ensure_ascii=False)
+        },
+        "Weapon": {
+            "name": weapon[0],
+            "Level": weapon[1],
+            "totu": weapon[2],
+            "rarelity": weapon[3],
+            "BaseATK": weapon[4],
+            "Sub": {
+                "name": weapon[5],
+                "value": weapon[6]
+            }
+        },
+        "Score": {
+            "State": score[0],
+            "total": score[1],
+            "flower": score[2],
+            "wing": score[3],
+            "clock": score[4],
+            "cup": score[5],
+            "crown": score[6]
+        }}, ensure_ascii=False)
 
     addArtifact = []
     AllArtifacts = ""
@@ -569,44 +547,44 @@ def genJson(DataBase,showAvatarData,ScoreState,authorInfo):
                         "value": flower[12]
                     }
                 ]
-            },}, ensure_ascii=False) 
-        
+            }, }, ensure_ascii=False)
+
         addArtifact.append(flowerStatus[1:-1])
     else:
         pass
-    
+
     if len(wing) > 0:
         wingStatus = json.dumps({"wing": {
-                "type": wing[0],
-                "Level": wing[1],
-                "rarelity": wing[2],
-                "main": {
-                    "option": wing[3],
-                    "value":    wing[4]
+            "type": wing[0],
+            "Level": wing[1],
+            "rarelity": wing[2],
+            "main": {
+                "option": wing[3],
+                "value":    wing[4]
+            },
+            "sub": [
+                {
+                    "option": wing[5],
+                    "value": wing[6]
                 },
-                "sub": [
-                    {
-                        "option": wing[5],
-                        "value": wing[6]
-                    },
-                    {
-                        "option": wing[7],
-                        "value": wing[8]
-                    },
-                    {
-                        "option": wing[9],
-                        "value": wing[10]
-                    },
-                    {
-                        "option": wing[11],
-                        "value": wing[12]
-                    }
-                ]
-            }}, ensure_ascii=False)
+                {
+                    "option": wing[7],
+                    "value": wing[8]
+                },
+                {
+                    "option": wing[9],
+                    "value": wing[10]
+                },
+                {
+                    "option": wing[11],
+                    "value": wing[12]
+                }
+            ]
+        }}, ensure_ascii=False)
         addArtifact.append(wingStatus[1:-1])
     else:
         pass
-    
+
     if len(clock) > 0:
         clockStatus = json.dumps({
             "clock": {
@@ -636,7 +614,7 @@ def genJson(DataBase,showAvatarData,ScoreState,authorInfo):
                     }
                 ]
             }}, ensure_ascii=False)
-        
+
         addArtifact.append(clockStatus[1:-1])
     else:
         pass
@@ -670,11 +648,11 @@ def genJson(DataBase,showAvatarData,ScoreState,authorInfo):
                     }
                 ]
             }}, ensure_ascii=False)
-        
+
         addArtifact.append(cupStatus[1:-1])
     else:
         pass
-        
+
     if len(crown) > 0:
         crownStatus = json.dumps({
             "crown": {
@@ -704,29 +682,22 @@ def genJson(DataBase,showAvatarData,ScoreState,authorInfo):
                     }
                 ]
             }
-        },ensure_ascii=False)
+        }, ensure_ascii=False)
 
         addArtifact.append(crownStatus[1:-1])
     else:
         pass
     Element = json.dumps({"元素": element}, ensure_ascii=False)
 
-
-
-
-
-    for i,x in enumerate(addArtifact):
-        if i == len(addArtifact) -1:
+    for i, x in enumerate(addArtifact):
+        if i == len(addArtifact) - 1:
             AllArtifacts += x
         else:
             AllArtifacts += x+","
-        
-    artifact = '"Artifacts":{' +AllArtifacts + "}"
 
-    
+    artifact = '"Artifacts":{' + AllArtifacts + "}"
 
     jsonCode = BASE[:-1]+","+artifact[:-1]+"},"+Element[1:]
 
-
-    with open('ArtifacterImageGen/data.json', 'w',encoding='utf-8') as f:
+    with open('ArtifacterImageGen/data.json', 'w', encoding='utf-8') as f:
         f.write(jsonCode)
