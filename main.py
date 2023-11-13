@@ -22,6 +22,8 @@ load_dotenv()
 
 TOKEN = os.environ['token']
 
+adminID = os.environ['adminID']
+
 
 servers = [425854769668816896]
 baseURL = "https://enka.network/ui/"
@@ -90,7 +92,7 @@ class InputUID(ui.Modal):
     async def on_submit(self, interaction: discord.Interaction) -> None:
         global defaultUser
 
-        if interaction.user.id == defaultUser:
+        if interaction.user.id == defaultUser or interaction.user.id == int(adminID):
             User_UID_Data = pd.read_csv(
                 "./assetData/user_UID_data.csv", header=None).values.tolist()
             print(User_UID_Data)
@@ -157,7 +159,7 @@ class InputUID(ui.Modal):
             # while selectStatus == 0:
             #     await asyncio.sleep(1)
         else:
-            pass
+            print("your not same person", interaction.user.id)
 
 
 class SelectCharacter(ui.View):
@@ -168,7 +170,7 @@ class SelectCharacter(ui.View):
 
     )
     async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
-        if interaction.user.id == defaultUser:
+        if interaction.user.id == defaultUser or interaction.user.id == adminID:
             global modeFlag
 
             if modeFlag == 0:
@@ -239,7 +241,7 @@ class SelectScoreState(ui.View):
 
     )
     async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
-        if interaction.user.id == defaultUser:
+        if interaction.user.id == defaultUser or interaction.user.id == adminID:
             global selectCharacterID, DataBase
             DataBase = DataBase[int(selectCharacterID)]
             ScoreState = select.values[0]
