@@ -50,31 +50,6 @@ async def on_ready():
     print("起動完了")
     await tree.sync()  # スラッシュコマンドを同期
 
-    # 何秒おきに確認するか？
-    interval_seconds = 60
-    # 定期的なタスクを作成
-
-    # @tasks.loop(seconds=interval_seconds)
-    # async def task_message():
-    #     task_keys_list = list(taskList.keys())
-    #     for key in task_keys_list:
-    #         guild_id = 0
-    #         channel_id = 0
-    #         message = ""
-    #         if taskList[key]["status"] == "active":
-    #             dt_now = datetime.datetime.now()
-    #             if dt_now.strftime('%H%M') == str(taskList[key]["time"]["h"])+str(taskList[key]["time"]["m"]):
-    #                 guild_id = taskList[key]["serverID"]
-    #                 channel_id = taskList[key]["chanelID"]
-    #                 message = taskList[key]["message"]
-    #                 guild = client.get_guild(guild_id)
-    #                 channel = guild.get_channel(channel_id)
-    #                 await channel.send(message)
-
-    # タスクを開始
-    # task_message.start()
-    print("start tasks")
-
 
 class InputUID(ui.Modal):
     global defaultUID
@@ -296,7 +271,6 @@ async def build_command(interaction: discord.Interaction):
 
         else:
             if defaultUID == None:
-                print("bbb")
                 defaultUID = None
     # print(defaultUID)
     modal = InputUID()
@@ -335,34 +309,6 @@ async def say_command(interaction: discord.Interaction):
     await interaction.response.send_message(res.text)
 
 
-@tree.command(name="addtask", description="指定時間に毎日送信するメッセージ追加できます。メッセージはこのコマンドが使われたところに送信されます")
-async def addTask(interaction: discord.Interaction, taskname: str, hour: str, minutes: str, message: str):
-    global taskList
-    newtask = {
-        taskname: {
-            "status": "active",
-            "time": {
-                "h": hour,
-                "m": minutes
-            },
-            "serverID": interaction.guild.id,
-            "chanelID": interaction.channel.id,
-            "DMID": "",
-            "message": message
-        }
-    }
-    with open('assetData/task.json', 'w', encoding="utf-8") as json_file:
-        json.dump(taskList, json_file, ensure_ascii=False, indent=2)
-    update_task()
-
-    await interaction.response.send_message(f"新規タスク`{taskname}'を{hour}時{minutes}分に追加しました。")
-
-
-@tree.command(name="switchtask", description="指定されたタスクのアクティブ状態を切り替えます")
-async def addTask(ctx, taskname: str, hour: int, minutes: int, message: str):
-    pass
-
-
 @tree.command(name="selectfavoritecharacter", description="ビルド生成時にオリジナルの画像を使用できるように登録します")
 async def select(interaction: discord.Interaction, photurl: str):
     global user, modeFlag, photoURL
@@ -383,7 +329,6 @@ async def select(interaction: discord.Interaction, photurl: str):
 
         else:
             if defaultUID == None:
-                print("bbb")
                 defaultUID = None
     # print(defaultUID)
     modal = InputUID()

@@ -1,2 +1,4 @@
 .env
 ArtifacterImageGen/date.json
+.venv
+__pycache__
