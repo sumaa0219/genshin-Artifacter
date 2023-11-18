@@ -455,6 +455,14 @@
 		},
 		"ImagePath": "SpriteOutput/LightConeFigures/22000.png"
 	},
+	"22001": {
+		"Rarity": 4,
+		"AvatarBaseType": "Priest",
+		"EquipmentName": {
+			"Hash": -516377540
+		},
+		"ImagePath": "SpriteOutput/LightConeFigures/22001.png"
+	},
 	"23000": {
 		"Rarity": 5,
 		"AvatarBaseType": "Mage",
@@ -590,6 +598,22 @@
 			"Hash": -496174565
 		},
 		"ImagePath": "SpriteOutput/LightConeFigures/23016.png"
+	},
+	"23017": {
+		"Rarity": 5,
+		"AvatarBaseType": "Priest",
+		"EquipmentName": {
+			"Hash": -496174566
+		},
+		"ImagePath": "SpriteOutput/LightConeFigures/23017.png"
+	},
+	"23018": {
+		"Rarity": 5,
+		"AvatarBaseType": "Mage",
+		"EquipmentName": {
+			"Hash": -496174571
+		},
+		"ImagePath": "SpriteOutput/LightConeFigures/23018.png"
 	},
 	"24000": {
 		"Rarity": 5,
