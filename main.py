@@ -16,6 +16,11 @@ import datetime
 from PIL import Image
 import shutil
 from io import BytesIO
+import pprint
+import re
+import voicevox
+from collections import defaultdict, deque
+import wave
 
 load_dotenv()
 
@@ -28,6 +33,8 @@ adminID = os.environ['adminID']
 servers = [425854769668816896]
 baseURL = "https://enka.network/ui/"
 
+connected_channel = {}
+
 
 with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_file:
     characters = json.load(json_file)
@@ -35,8 +42,9 @@ with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_fil
 with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
     nameItem = json.load(json_file)
 
-
+discord.opus.load_opus("libopus.dylib")
 intents = discord.Intents.default()  # 適当に。
+intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 flag = 0
@@ -49,31 +57,6 @@ async def on_ready():
     update_task()
     print("起動完了")
     await tree.sync()  # スラッシュコマンドを同期
-
-    # 何秒おきに確認するか？
-    interval_seconds = 60
-    # 定期的なタスクを作成
-
-    # @tasks.loop(seconds=interval_seconds)
-    # async def task_message():
-    #     task_keys_list = list(taskList.keys())
-    #     for key in task_keys_list:
-    #         guild_id = 0
-    #         channel_id = 0
-    #         message = ""
-    #         if taskList[key]["status"] == "active":
-    #             dt_now = datetime.datetime.now()
-    #             if dt_now.strftime('%H%M') == str(taskList[key]["time"]["h"])+str(taskList[key]["time"]["m"]):
-    #                 guild_id = taskList[key]["serverID"]
-    #                 channel_id = taskList[key]["chanelID"]
-    #                 message = taskList[key]["message"]
-    #                 guild = client.get_guild(guild_id)
-    #                 channel = guild.get_channel(channel_id)
-    #                 await channel.send(message)
-
-    # タスクを開始
-    # task_message.start()
-    print("start tasks")
 
 
 class InputUID(ui.Modal):
@@ -296,7 +279,6 @@ async def build_command(interaction: discord.Interaction):
 
         else:
             if defaultUID == None:
-                print("bbb")
                 defaultUID = None
     # print(defaultUID)
     modal = InputUID()
@@ -335,34 +317,6 @@ async def say_command(interaction: discord.Interaction):
     await interaction.response.send_message(res.text)
 
 
-@tree.command(name="addtask", description="指定時間に毎日送信するメッセージ追加できます。メッセージはこのコマンドが使われたところに送信されます")
-async def addTask(interaction: discord.Interaction, taskname: str, hour: str, minutes: str, message: str):
-    global taskList
-    newtask = {
-        taskname: {
-            "status": "active",
-            "time": {
-                "h": hour,
-                "m": minutes
-            },
-            "serverID": interaction.guild.id,
-            "chanelID": interaction.channel.id,
-            "DMID": "",
-            "message": message
-        }
-    }
-    with open('assetData/task.json', 'w', encoding="utf-8") as json_file:
-        json.dump(taskList, json_file, ensure_ascii=False, indent=2)
-    update_task()
-
-    await interaction.response.send_message(f"新規タスク`{taskname}'を{hour}時{minutes}分に追加しました。")
-
-
-@tree.command(name="switchtask", description="指定されたタスクのアクティブ状態を切り替えます")
-async def addTask(ctx, taskname: str, hour: int, minutes: int, message: str):
-    pass
-
-
 @tree.command(name="selectfavoritecharacter", description="ビルド生成時にオリジナルの画像を使用できるように登録します")
 async def select(interaction: discord.Interaction, photurl: str):
     global user, modeFlag, photoURL
@@ -383,7 +337,6 @@ async def select(interaction: discord.Interaction, photurl: str):
 
         else:
             if defaultUID == None:
-                print("bbb")
                 defaultUID = None
     # print(defaultUID)
     modal = InputUID()
@@ -467,6 +420,240 @@ def setOriginalCharacter(url, mode, Name, userName, beforName=None):
 
     # 画像を指定した名前で保存
     background.save(save_path)
+
+# ボイスチャンネルに接続
+
+
+@tree.command(name="join", description="ボイスチャンネルに接続します")
+async def join(interaction: discord.Interaction):
+    if interaction.user.voice is None:
+        await interaction.response.send_message("ボイスチャンネルに接続していません", ephemeral=True)
+        return
+
+    if interaction.guild.voice_client is not None:  # 他のボイスチャンネルに接続していた場合
+        await interaction.guild.voice_client.move_to(interaction.user.voice.channel)
+        await interaction.response.send_message("ボイスチャンネルを移動しました", ephemeral=False)
+        return
+
+    await interaction.user.voice.channel.connect()
+    await interaction.response.send_message("接続しました")
+    connected_channel[interaction.guild_id] = interaction.channel_id
+
+# ボイスチャンネルから切断
+
+
+@tree.command(name="disconnect", description="ボイスチャンネルから切断します")
+async def disconnect(interaction: discord.Interaction):
+    if interaction.user.voice is None:
+        await interaction.response.send_message("ボイスチャンネルに接続していません", ephemeral=True)
+        return
+
+    await interaction.guild.voice_client.disconnect(force=True)
+    await interaction.response.send_message("切断しました")
+    connected_channel.pop(interaction.guild_id)
+
+# 辞書
+
+# 辞書を読み込み
+
+
+def load_dict(interaction: discord.Interaction):
+    if os.path.isfile(f"./VC/{interaction.guild.id}.json"):
+        with open(f"./VC/{interaction.guild.id}.json", "r", encoding="UTF-8")as f:
+            dict = json.load(f)
+    else:
+        dict = {}
+    return dict
+
+# 辞書に単語と読み方を追加
+
+
+@tree.command(name="add", description="辞書に単語の読み方登録します")
+async def addWords(interaction: discord.Interaction, vocabulary: str, pronunciation: str):
+    if not os.path.exists("VC"):
+        os.makedirs("VC")
+    if not os.path.exists(f"./VC/{interaction.guild.id}.json"):
+        newJson = {}
+        with open(f"./VC/{interaction.guild.id}.json", "w", encoding="UTF-8")as f:
+            json.dump(newJson, f, indent=2, ensure_ascii=False)
+    word = load_dict(interaction)
+
+    word[vocabulary] = pronunciation
+    with open(f"./VC/{interaction.guild.id}.json", "w", encoding="UTF-8")as f:
+        f.write(json.dumps(word, indent=2, ensure_ascii=False))
+    dict_add_embed = discord.Embed(title="辞書追加", color=0x3399cc)
+    dict_add_embed.add_field(name="単語", value=f"{vocabulary}", inline="false")
+    dict_add_embed.add_field(
+        name="読み", value=f"{pronunciation}", inline="false")
+    await interaction.response.send_message(embed=dict_add_embed)
+
+# 登録されている単語の読み方を削除
+
+
+@tree.command(name="delete", description="辞書に単語の読み方削除します")
+async def delWords(interaction: discord.Interaction, vocabulary: str):
+    word = load_dict(interaction)
+    del word[vocabulary]
+    with open(f"./VC/{interaction.guild.id}.json", "w", encoding="UTF-8")as f:
+        f.write(json.dumps(word, indent=2, ensure_ascii=False))
+    await interaction.response.send_message(f"辞書から`{vocabulary}`を削除しました")
+    return
+
+# 登録されてる単語を表示
+
+
+@tree.command(name="list", description="辞書に登録された単語を表示します")
+async def listWords(interaction: discord.Interaction):
+    word = load_dict(interaction)
+    await interaction.response.send_message("辞書を表示します\n```" + pprint.pformat(word, depth=1) + "```")
+
+
+class SelectSpeakerTention(ui.View):
+    @discord.ui.select(
+        cls=ui.Select,
+        placeholder="読み上げキャラクターのテンション",
+
+
+    )
+    async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
+        fileName = "./VC/user_speaker.json"
+        if os.path.isfile(fileName):
+            with open(fileName, "r", encoding="UTF-8")as f:
+                dict = json.load(f)
+        else:
+            dict = {}
+        dict[interaction.user.id] = select.values[0]
+        with open(fileName, "w", encoding="UTF-8")as f:
+            json.dump(dict, f, indent=2, ensure_ascii=False)
+        await interaction.response.send_message(f"変更が完了しました")
+
+
+class SelectSpeaker(ui.View):
+    @discord.ui.select(
+        cls=ui.Select,
+        placeholder="読み上げキャラクター",
+
+
+    )
+    async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
+        view = SelectSpeakerTention()
+        for info in speakerInfo[int(select.values[0])]["styles"]:
+            view.selectMenu.add_option(
+                label=info["name"],
+                value=info["id"]
+            )
+        await interaction.response.send_message("テンション一覧", view=view)
+
+
+@tree.command(name="selectspeaker", description="話者の変更を行います")
+async def selectSpeaker(interaction: discord.Interaction):
+    global speakerInfo
+    with open(f"./VC/speaker.json", "r", encoding="UTF-8")as f:
+        speakerInfo = json.load(f)
+    view = SelectSpeaker()
+    for i, info in enumerate(speakerInfo):
+        view.selectMenu.add_option(
+            label=info["name"],
+            value=i
+        )
+    await interaction.response.send_message("一覧", view=view)
+
+
+# # メッセージが送られた時
+
+# キュー
+queue_dict = defaultdict(deque)
+
+
+def enqueue(voice_client, guild, source):
+    queue = queue_dict[guild.id]
+    queue.append(source)
+    if not voice_client.is_playing():
+        play(voice_client, queue)
+
+
+def play(voice_client, queue):
+    if not queue or voice_client.is_playing():
+        return
+    source = queue.popleft()
+    voice_client.play(source, after=lambda e: play(voice_client, queue))
+
+
+@client.event
+async def on_message(message):
+    # コマンドをコマンドとしてトリガーし、読み上げから除外
+    if message.content.startswith("/"):
+        return
+
+    # botの発言は無視
+    if message.author.bot:
+        return
+
+    # 読み上げ
+
+    if message.channel.id in connected_channel.values() and message.guild.voice_client is not None:
+        read_msg = message.content
+
+        # 話者の設定の読み込み
+        with open("./VC/user_speaker.json", "r", encoding="UTF-8")as f:
+            speaker = json.load(f)
+        if speaker[str(message.author.id)]:
+            speaker_id = int(speaker[str(message.author.id)])
+        else:
+            speaker_id = 8
+
+        # 辞書置換
+        if os.path.isfile(f"./VC/{message.guild.id}.json"):
+            with open(f"./VC/{message.guild.id}.json", "r", encoding="UTF-8")as f:
+                word = json.load(f)
+            read_list = []  # あとでまとめて変換するときの読み仮名リスト
+            # one_dicは単語と読みのタプル。添字はそれぞれ0と1。
+            for i, one_dic in enumerate(word.items()):
+                read_msg = read_msg.replace(one_dic[0], '{'+str(i)+'}')
+                read_list.append(one_dic[1])  # 変換が発生した順に読みがなリストに追加
+            read_msg = read_msg.format(*read_list)  # 読み仮名リストを引数にとる
+
+        # URL置換
+        read_msg = re.sub(r"https?://.*?\s|https?://.*?$", "URL", read_msg)
+
+        # ネタバレ置換
+        read_msg = re.sub(r"\|\|.*?\|\|", "ネタバレ", read_msg)
+
+        # メンション置換
+        if "<@" and ">" in message.content:
+            Temp = re.findall("<@!?([0-9]+)>", message.content)
+            for i in range(len(Temp)):
+                Temp[i] = int(Temp[i])
+                user = message.guild.get_member(Temp[i])
+                read_msg = re.sub(
+                    f"<@!?{Temp[i]}>", "アットマーク" + user.display_name, read_msg)
+
+        # サーバー絵文字置換
+        read_msg = re.sub(r"<:(.*?):[0-9]+>", r"\1", read_msg)
+
+        # *text*置換
+        read_msg = re.sub(r"\*(.*?)\*", r"\1", read_msg)
+
+        # _hoge_置換
+        read_msg = re.sub(r"_(.*?)_", r"\1", read_msg)
+
+        # debug
+        print(read_msg)
+
+        voiceFileName = voicevox.text_2_wav(read_msg, speaker_id)
+
+        # # 音声読み上げ
+        enqueue(message.guild.voice_client, message.guild, discord.FFmpegPCMAudio(
+            voiceFileName))
+        # logger.info(f"ReadSentence:{read_msg}")
+
+        # # 音声ファイル削除
+        with wave.open(voiceFileName, "rb")as f:
+            wave_length = (f.getnframes() / f.getframerate())  # 再生時間
+        # logger.info(f"PlayTime:{wave_length}")
+        await asyncio.sleep(wave_length + 10)
+
+        os.remove(voiceFileName)
 
 
 client.run(TOKEN)
