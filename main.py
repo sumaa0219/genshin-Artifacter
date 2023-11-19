@@ -42,7 +42,8 @@ with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_fil
 with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
     nameItem = json.load(json_file)
 
-discord.opus.load_opus("libopus.dylib")
+# discord.opus.load_opus("libopus.dylib")
+discord.opus.load_opus("/usr/local/Cellar/opus/1.4/lib/libopus.dylib")
 intents = discord.Intents.default()  # 適当に。
 intents.message_content = True
 client = discord.Client(intents=intents)
@@ -315,6 +316,12 @@ async def delete_messages(interaction: discord.Interaction, member: discord.Memb
 async def say_command(interaction: discord.Interaction):
     res = requests.get('https://ifconfig.me')
     await interaction.response.send_message(res.text)
+
+
+@tree.command(name="id", description="get ip")
+@app_commands.check(is_bot)
+async def id_command(interaction: discord.Interaction):
+    await interaction.response.send_message(os.getpid())
 
 
 @tree.command(name="selectfavoritecharacter", description="ビルド生成時にオリジナルの画像を使用できるように登録します")
@@ -597,9 +604,9 @@ async def on_message(message):
         # 話者の設定の読み込み
         with open("./VC/user_speaker.json", "r", encoding="UTF-8")as f:
             speaker = json.load(f)
-        if speaker[str(message.author.id)]:
+        try:
             speaker_id = int(speaker[str(message.author.id)])
-        else:
+        except:
             speaker_id = 8
 
         # 辞書置換
@@ -649,7 +656,7 @@ async def on_message(message):
 
         # # 音声ファイル削除
         with wave.open(voiceFileName, "rb")as f:
-            wave_length = (f.getnframes() / f.getframerate())  # 再生時間
+            wave_length = (f.getnframes() / f.getframerate()/100)  # 再生時間
         # logger.info(f"PlayTime:{wave_length}")
         await asyncio.sleep(wave_length + 10)
 
