@@ -588,6 +588,7 @@ def play(voice_client, queue):
 
 @client.event
 async def on_message(message):
+
     # コマンドをコマンドとしてトリガーし、読み上げから除外
     if message.content.startswith("/"):
         return
@@ -652,7 +653,6 @@ async def on_message(message):
         # # 音声読み上げ
         enqueue(message.guild.voice_client, message.guild, discord.FFmpegPCMAudio(
             voiceFileName))
-        # logger.info(f"ReadSentence:{read_msg}")
 
         # # 音声ファイル削除
         with wave.open(voiceFileName, "rb")as f:
@@ -661,6 +661,32 @@ async def on_message(message):
         await asyncio.sleep(wave_length + 10)
 
         os.remove(voiceFileName)
+
+
+# @client.event
+# async def on_voice_state_update(member, before, after):
+#     if after is not before and after.self_mute is before.self_mute and after.self_stream is before.self_stream and after.self_deaf is before.self_deaf:
+#         if before.channel is None:
+#             read_msg = f"{member.name}が参加しました"
+#         elif after.channel is None:
+#             read_msg = f"{member.name}が退出しました"
+
+#     print(read_msg)
+
+#     voiceFileName = voicevox.text_2_wav(read_msg, 30)
+
+#     print(member.guild.voice_client, member.guild)
+#     # # 音声読み上げ
+#     member.guild.voice_client.play(discord.FFmpegPCMAudio(
+#         voiceFileName))
+
+#     # # 音声ファイル削除
+#     with wave.open(voiceFileName, "rb")as f:
+#         wave_length = (f.getnframes() / f.getframerate()/100)  # 再生時間
+#     # logger.info(f"PlayTime:{wave_length}")
+#     await asyncio.sleep(wave_length + 10)
+
+#     os.remove(voiceFileName)
 
 
 client.run(TOKEN)
