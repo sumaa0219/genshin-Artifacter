@@ -663,30 +663,36 @@ async def on_message(message):
         os.remove(voiceFileName)
 
 
-# @client.event
-# async def on_voice_state_update(member, before, after):
-#     if after is not before and after.self_mute is before.self_mute and after.self_stream is before.self_stream and after.self_deaf is before.self_deaf:
-#         if before.channel is None:
-#             read_msg = f"{member.name}が参加しました"
-#         elif after.channel is None:
-#             read_msg = f"{member.name}が退出しました"
+@client.event
+async def on_voice_state_update(member, before, after):
+    if (member.guild.voice_client is not None and member.id != client.user.id and member.guild.voice_client.channel is before.channel and len(member.guild.voice_client.channel.members) == 1):  # ボイスチャンネルに自分だけ参加していたら
+        await member.guild.voice_client.disconnect()
+        return
 
-#     print(read_msg)
+    if after is not before and after.self_mute is before.self_mute and after.self_stream is before.self_stream and after.self_deaf is before.self_deaf:
+        await asyncio.sleep(1)
+        if before.channel is None:
+            read_msg = f"{member.display_name}が参加しました"
+        elif after.channel is None:
+            read_msg = f"{member.display_name}が退出しました"
 
-#     voiceFileName = voicevox.text_2_wav(read_msg, 30)
+        print(read_msg)
 
-#     print(member.guild.voice_client, member.guild)
-#     # # 音声読み上げ
-#     member.guild.voice_client.play(discord.FFmpegPCMAudio(
-#         voiceFileName))
+        voiceFileName = voicevox.text_2_wav(read_msg, 30)
 
-#     # # 音声ファイル削除
-#     with wave.open(voiceFileName, "rb")as f:
-#         wave_length = (f.getnframes() / f.getframerate()/100)  # 再生時間
-#     # logger.info(f"PlayTime:{wave_length}")
-#     await asyncio.sleep(wave_length + 10)
+        # print(member.guild.voice_client, member.guild)
+        # # # 音声読み上げ
+        if member.guild.voice_client and member.guild.voice_client.is_connected():
+            enqueue(member.guild.voice_client, member.guild, discord.FFmpegPCMAudio(
+                voiceFileName))
 
-#     os.remove(voiceFileName)
+            # 音声ファイル削除
+            with wave.open(voiceFileName, "rb")as f:
+                wave_length = (f.getnframes() / f.getframerate()/100)  # 再生時間
+
+            await asyncio.sleep(wave_length + 5)
+
+        os.remove(voiceFileName)
 
 
 client.run(TOKEN)
