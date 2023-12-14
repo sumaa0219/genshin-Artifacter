@@ -61,11 +61,13 @@ def getData(UID):
     NameCardName = namecard[str(NameCardID)]["icon"]
     NameCardURL = baseURL + NameCardName + ".png"
 
-    ProfileAvatarID = PlayerINFO["profilePicture"]["avatarId"]
-
-    ProfileAvatarname = characters[str(ProfileAvatarID)]["SideIconName"]
-    name = ProfileAvatarname.split("_")
-    AvatarNameURL = baseURL + name[0] + "_" + name[1]+"_"+name[3]+".png"
+    try:
+        ProfileAvatarID = PlayerINFO["profilePicture"]["avatarId"]
+        ProfileAvatarname = characters[str(ProfileAvatarID)]["SideIconName"]
+        name = ProfileAvatarname.split("_")
+        AvatarNameURL = baseURL + name[0] + "_" + name[1]+"_"+name[3]+".png"
+    except:
+        AvatarNameURL = None
 
     PlayerInfo.append(PlayerName)
     PlayerInfo.append(PlayerLevel)

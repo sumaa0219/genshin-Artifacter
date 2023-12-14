@@ -774,4 +774,55 @@ def update_task():
         taskList = json.load(json_file)
 
 
+# @tree.command(name="vote", description="投票を行います")
+# async def vote(interaction: discord.Interaction, title: str, options: str):
+#     options = options.split()  # 選択肢を分割
+#     if len(options) < 2 or len(options) > 6:
+#         await interaction.channel.send("選択肢は2-6択である必要があります。")
+#         return
+
+#     reactions = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣']
+
+#     description = []
+#     for x, option in enumerate(options):
+#         description += '\n {} {}'.format(reactions[x], option)
+#     embed = discord.Embed(title=title, description=''.join(description))
+
+#     react_message = await interaction.channel.send(embed=embed)
+
+#     for reaction in reactions[:len(options)]:
+#         await react_message.add_reaction(reaction)
+
+#     votes = {}
+
+#     def check(reaction, user):
+#         if user == interaction.user and str(reaction.emoji) in reactions[:len(options)]:
+#             votes[user.id] = str(reaction.emoji)
+#             return True
+#         return False
+
+#     while True:
+#         try:
+#             reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+#         except asyncio.TimeoutError:
+#             # 投票が締め切られた後、結果を表示
+#             react_message = await react_message.channel.fetch_message(react_message.id)
+#             results = {
+#                 react.emoji: react.count for react in react_message.reactions}
+#             result_message = "\n".join(
+#                 [f"{emoji}: {count}" for emoji, count in results.items()])
+#             await interaction.channel.send(f'投票が締め切られました。\n結果:\n{result_message}')
+#             break
+#         else:
+#             # リアクションが取り消されたらその人の投票も取り消す
+#             def remove_check(payload):
+#                 return payload.user_id == user.id and payload.message_id == react_message.id and str(payload.emoji) in reactions[:len(options)]
+
+#             try:
+#                 payload = await client.wait_for('raw_reaction_remove', timeout=60.0, check=remove_check)
+#             except asyncio.TimeoutError:
+#                 pass
+#             else:
+#                 del votes[payload.user_id]
+
 client.run(TOKEN)
