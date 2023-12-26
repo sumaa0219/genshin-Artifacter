@@ -104,7 +104,7 @@ class InputUID(ui.Modal):
         if interaction.user.id == defaultUser or interaction.user.id == int(adminID):
             User_UID_Data = pd.read_csv(
                 "./assetData/user_UID_data.csv", header=None).values.tolist()
-            print(User_UID_Data)
+            # print(User_UID_Data)
             pd.set_option('display.float_format', lambda x: '%.0f' % x)
             data = []
             dataSet = []

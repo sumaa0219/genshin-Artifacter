@@ -436,6 +436,9 @@ def generation(data):
         PreviewPaste = Image.new('RGBA', Base.size, (255, 255, 255, 0))
         Preview = Image.open(
             f'{cwd}/Artifact/{details["type"]}/{parts}.png').resize((256, 256))
+        # 画像のモードを 'RGBA' に変換
+        if Preview.mode != 'RGBA':
+            Preview = Preview.convert('RGBA')
         enhancer = ImageEnhance.Brightness(Preview)
         Preview = enhancer.enhance(0.6)
         Preview = Preview.resize(
