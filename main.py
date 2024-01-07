@@ -697,9 +697,12 @@ async def on_message(message):
 
     # URLを変換する
     for url in urls:
-        if "twitter.com" in url or "x.com" in url:
+        if "vxtwitter.com" in url:
+            pass
+        elif "twitter.com" in url or "x.com" in url:
             new_url = url.replace("twitter.com", "vxtwitter.com").replace(
                 "x.com", "vxtwitter.com")
+
             await message.reply(f"{new_url}")
 
 
