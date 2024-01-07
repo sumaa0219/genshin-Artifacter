@@ -687,6 +687,21 @@ async def on_message(message):
 
         os.remove(voiceFileName)
 
+    # URL自動変換
+
+    # URLを見つけるための正規表現パターン
+    url_pattern = re.compile(r"(https?://[^\s]+)")
+
+    # メッセージ内のURLを見つける
+    urls = url_pattern.findall(message.content)
+
+    # URLを変換する
+    for url in urls:
+        if "twitter.com" in url or "x.com" in url:
+            new_url = url.replace("twitter.com", "vxtwitter.com").replace(
+                "x.com", "vxtwitter.com")
+            await message.reply(f"{new_url}")
+
 
 @client.event
 async def on_voice_state_update(member, before, after):
