@@ -21,6 +21,7 @@ import re
 import voicevox
 from collections import defaultdict, deque
 import wave
+import glob
 
 load_dotenv()
 
@@ -64,6 +65,9 @@ modeFlag = 0
 async def on_ready():
     update_task()
     await send_console("起動しました")
+    files = glob.glob(f"/home/sumaa/genshin-Artifacter/VC/*.wav")
+    for file in files:
+        os.remove(file)
     await tree.sync()  # スラッシュコマンドを同期
 
     # 何秒おきに確認するか？
@@ -134,9 +138,12 @@ class InputUID(ui.Modal):
                     "./assetData/user_UID_data.csv", index=False, header=False)
 
             global DataBase, showAvatarlist, PlayerInfo
-            DataBase, showAvatarlist, PlayerInfo = arttifacter.getData(
-                int(self.uid.value))
-
+            try:
+                DataBase, showAvatarlist, PlayerInfo = arttifacter.getData(
+                    int(self.uid.value))
+            except:
+                interaction.response.send_message(
+                    "UIDが間違っているか、プロフィールの公開設定がされていません")
             embed = discord.Embed(
                 title=PlayerInfo[0], color=discord.Color.blurple())
             embed.set_thumbnail(url=PlayerInfo[4])
@@ -338,19 +345,6 @@ async def delete_messages(interaction: discord.Interaction, member: discord.Memb
     await interaction.followup.send(
         f"{member.display_name}'s last {limit} messages deleted."
     )
-
-
-@tree.command(name="ip", description="get ip")
-@app_commands.check(is_bot)
-async def say_command(interaction: discord.Interaction):
-    res = requests.get('https://ifconfig.me')
-    await interaction.response.send_message(res.text)
-
-
-@tree.command(name="id", description="get ip")
-@app_commands.check(is_bot)
-async def id_command(interaction: discord.Interaction):
-    await interaction.response.send_message(os.getpid())
 
 
 @tree.command(name="selectfavoritecharacter", description="ビルド生成時にオリジナルの画像を使用できるように登録します")
@@ -728,7 +722,7 @@ async def on_voice_state_update(member, before, after):
             read_msg = f"{member.display_name}が退出しました"
 
         try:
-            await send_console(f"<join viceChannel>**{member.guild.name}**  :{read_msg}")
+            await send_console(f"<Status chenged viceChannel>**{member.guild.name}**  :{read_msg}")
         except:
             pass
 
@@ -744,7 +738,7 @@ async def on_voice_state_update(member, before, after):
             with wave.open(voiceFileName, "rb")as f:
                 wave_length = (f.getnframes() / f.getframerate()/100)  # 再生時間
 
-            await asyncio.sleep(wave_length + 5)
+            await asyncio.sleep(wave_length + 3)
 
         os.remove(voiceFileName)
 
@@ -762,6 +756,7 @@ async def addTask(interaction: discord.Interaction, taskname: str, hour: str, mi
             "serverID": interaction.guild.id,
             "chanelID": interaction.channel.id,
             "DMID": "",
+            "userID": interaction.user.id,
             "message": message
         }
     }
@@ -795,6 +790,69 @@ async def deleteTask(interaction: discord.Interaction, taskname: str):
     with open('assetData/task.json', 'w', encoding="utf-8") as json_file:
         json.dump(taskList, json_file, ensure_ascii=False, indent=2)
     update_task()
+
+
+@tree.command(name="listtask", description="ユーザが作成したタスクを表示します")
+async def listTask(interaction: discord.Interaction):
+    global taskList
+    user_taskList = []
+    update_task()
+    user_id = interaction.user.id  # インタラクションしたユーザーのIDを取得
+    # ユーザーのタスクリストを取得（存在しない場合は空の辞書を返す）
+    for task in taskList:
+        if taskList[task]["userID"] == user_id:
+            user_taskList.append(task)
+
+    # タスクリストが空の場合、特定のメッセージを返す
+    if not user_taskList:
+        await interaction.response.send_message("タスクが登録されていません。")
+        return
+
+    embed = discord.Embed(
+        title="タスク一覧", description="以下のタスクが登録されています。", color=discord.Color.blurple())
+    for task in user_taskList:
+        embed.add_field(
+            name=task, value=f"状態:{taskList[task]['status']}\n時間:{taskList[task]['time']['h']}時{taskList[task]['time']['m']}分\nメッセージ:{taskList[task]['message']}", inline=False)
+    await interaction.response.send_message(embed=embed)
+
+
+@tree.command(name="help", description="各種コマンドの機能を詳しく紹介します")
+async def help(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="コマンド一覧", description="以下のコマンドが利用可能です。\n", color=discord.Color.blurple())
+
+    embed.add_field(name="/help", value="全コマンドの詳細を表示します。\n", inline=False)
+    embed.add_field(
+        name="/build", value="原神のuidを入力することでプロフィールに設定しているキャラ1体の詳細をビルドカードにして表示します。\n**※ただし原神のプロフィールでキャラの詳細を表示を許可しないとできません**\n", inline=False)
+    embed.add_field(name="/selectfavoritecharacter",
+                    value="ビルドカード生成時にキャラクターにオリジナルの画像を使用できるように登録します。登録には画像の**URL**が必要です。\n", inline=False)
+    embed.add_field(name="/deletefavoritecharacter",
+                    value="キャラクターのオリジナルの画像を削除します\n", inline=False)
+    embed.add_field(
+        name="/join", value="ボイスチャンネルに接続します。/joinが実行されたテキストチャンネルをVC内で読み上げます\n", inline=False)
+    embed.add_field(name="/disconnect",
+                    value="ボイスチャンネルから切断します\n", inline=False)
+    embed.add_field(name="/selectspeaker",
+                    value="メッセージの読み上げの際、あなたのメッセージを読み上げるキャラクターを変更します\n", inline=False)
+    embed.add_field(
+        name="/add", value="辞書に単語と読み方を追加します。設定はサーバー単位で行われます\n", inline=False)
+    embed.add_field(
+        name="/delete", value="辞書に登録されている単語を削除します。設定はサーバー単位で行われます\n", inline=False)
+    embed.add_field(
+        name="/list", value="辞書に登録されている単語を表示します。辞書はそのサーバーで登録されたものを表示します\n", inline=False)
+    embed.add_field(
+        name="/addtask", value="指定時間に毎日送信するメッセージ追加できます。メッセージはこのコマンドが使われたところに送信されます。時間は24時間表記です。\n", inline=False)
+    embed.add_field(name="/switchtask",
+                    value="指定されたタスクのアクティブ状態を切り替えます\n", inline=False)
+    embed.add_field(name="/deletetask", value="指定されたタスクを削除します\n", inline=False)
+    embed.add_field(name="/listtask",
+                    value="ユーザが作成したタスクを表示します\n", inline=False)
+    embed.add_field(name="/delete_messages",
+                    value="コマンドが実行されたテキストチャンネルの指定されたユーザの最新のメッセージを指定された数だけ遡って削除します", inline=False)
+
+    # 他のコマンドも同様に追加してください。
+
+    await interaction.response.send_message(embed=embed)
 
 
 def update_task():

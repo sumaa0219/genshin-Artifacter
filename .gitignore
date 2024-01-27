@@ -2,5 +2,5 @@
 ArtifacterImageGen/date.json
 .venv
 __pycache__
-.wav
+*.wav
 .python-version
