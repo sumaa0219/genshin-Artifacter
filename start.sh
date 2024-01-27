@@ -1,0 +1,1 @@
+cd /home/sumaa/genshin-Artifacter; /home/sumaa/.pyenv/shims/python main.py

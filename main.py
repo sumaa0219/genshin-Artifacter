@@ -29,8 +29,9 @@ TOKEN = os.environ['token']
 
 adminID = os.environ['adminID']
 
+adminServer = os.environ['adminServer']
+adminChannel = os.environ['adminChannel']
 
-servers = [425854769668816896]
 baseURL = "https://enka.network/ui/"
 
 connected_channel = {}
@@ -42,8 +43,14 @@ with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_fil
 with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
     nameItem = json.load(json_file)
 
+# mac用
 # discord.opus.load_opus("libopus.dylib")
-discord.opus.load_opus("/usr/local/Cellar/opus/1.4/lib/libopus.dylib")
+# discord.opus.load_opus("/usr/local/Cellar/opus/1.4/lib/libopus.dylib")
+
+# ubuntu用
+discord.opus.load_opus("libopus.so.0")
+discord.opus.load_opus("/usr/lib/x86_64-linux-gnu/libopus.so.0")
+
 intents = discord.Intents.default()  # 適当に。
 intents.message_content = True
 client = discord.Client(intents=intents)
@@ -56,7 +63,7 @@ modeFlag = 0
 @client.event
 async def on_ready():
     update_task()
-    print("起動完了")
+    await send_console("起動しました")
     await tree.sync()  # スラッシュコマンドを同期
 
     # 何秒おきに確認するか？
@@ -82,7 +89,6 @@ async def on_ready():
 
     # タスクを開始
     task_message.start()
-    print("start tasks")
 
 
 class InputUID(ui.Modal):
@@ -104,7 +110,6 @@ class InputUID(ui.Modal):
         if interaction.user.id == defaultUser or interaction.user.id == int(adminID):
             User_UID_Data = pd.read_csv(
                 "./assetData/user_UID_data.csv", header=None).values.tolist()
-            # print(User_UID_Data)
             pd.set_option('display.float_format', lambda x: '%.0f' % x)
             data = []
             dataSet = []
@@ -121,10 +126,9 @@ class InputUID(ui.Modal):
                     wronFlag += 1
 
             if wronFlag == len(User_UID_Data):
-                print("はじめて")
                 new = [int(interaction.user.id), int(self.uid.value), None]
                 User_UID_Data.append(new)
-                print(User_UID_Data)
+                await send_console(User_UID_Data)
 
                 pd.DataFrame(User_UID_Data).to_csv(
                     "./assetData/user_UID_data.csv", index=False, header=False)
@@ -141,7 +145,7 @@ class InputUID(ui.Modal):
             embed.set_image(url=PlayerInfo[3])
             view = SelectCharacter()
             embed.set_footer(text="UID: " + str(self.uid.value))
-            print("UID:"+str(self.uid.value))
+            await send_console("UID:"+str(self.uid.value))
 
             showCharaNameList = []
             showCharaLevelList = []
@@ -292,7 +296,7 @@ def generate():
 async def build_command(interaction: discord.Interaction):
     User_UID_Data = pd.read_csv(
         "./assetData/user_UID_data.csv", header=None).values.tolist()
-    print(interaction.user.id)
+    await send_console(f"<buid command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
 
     global defaultUID, defaultUser, modeFlag
     modeFlag = 0
@@ -357,7 +361,7 @@ async def select(interaction: discord.Interaction, photurl: str):
     modeFlag = 1
     User_UID_Data = pd.read_csv(
         "./assetData/user_UID_data.csv", header=None).values.tolist()
-    print(interaction.user.id)
+    await send_console(interaction.user.id)
 
     global defaultUID, defaultUser
     defaultUser = interaction.user.id
@@ -458,6 +462,7 @@ def setOriginalCharacter(url, mode, Name, userName, beforName=None):
 
 @tree.command(name="join", description="ボイスチャンネルに接続します")
 async def join(interaction: discord.Interaction):
+    await send_console(f"<join command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
     if interaction.user.voice is None:
         await interaction.response.send_message("ボイスチャンネルに接続していません", ephemeral=True)
         return
@@ -671,7 +676,10 @@ async def on_message(message):
         read_msg = re.sub(r"_(.*?)_", r"\1", read_msg)
 
         # debug
-        print(read_msg)
+        try:
+            await send_console(read_msg)
+        except:
+            pass
 
         voiceFileName = voicevox.text_2_wav(read_msg, speaker_id)
 
@@ -689,21 +697,21 @@ async def on_message(message):
 
     # URL自動変換
 
-    # URLを見つけるための正規表現パターン
-    url_pattern = re.compile(r"(https?://[^\s]+)")
+    # # URLを見つけるための正規表現パターン
+    # url_pattern = re.compile(r"(https?://[^\s]+)")
 
-    # メッセージ内のURLを見つける
-    urls = url_pattern.findall(message.content)
+    # # メッセージ内のURLを見つける
+    # urls = url_pattern.findall(message.content)
 
-    # URLを変換する
-    for url in urls:
-        if "vxtwitter.com" in url:
-            pass
-        elif "twitter.com" in url or "x.com" in url:
-            new_url = url.replace("twitter.com", "vxtwitter.com").replace(
-                "x.com", "vxtwitter.com")
+    # # URLを変換する
+    # for url in urls:
+    #     if "vxtwitter.com" in url:
+    #         pass
+    #     elif "twitter.com" in url or "x.com" in url:
+    #         new_url = url.replace("twitter.com", "vxtwitter.com").replace(
+    #             "x.com", "vxtwitter.com")
 
-            await message.reply(f"{new_url}")
+    #         await message.reply(f"{new_url}")
 
 
 @client.event
@@ -719,7 +727,10 @@ async def on_voice_state_update(member, before, after):
         elif after.channel is None:
             read_msg = f"{member.display_name}が退出しました"
 
-        print(read_msg)
+        try:
+            await send_console(f"<join viceChannel>**{member.guild.name}**  :{read_msg}")
+        except:
+            pass
 
         voiceFileName = voicevox.text_2_wav(read_msg, 30)
 
@@ -792,6 +803,11 @@ def update_task():
         taskList = json.load(json_file)
 
 
+async def send_console(message):
+    guild = client.get_guild(int(adminServer))
+    channel = guild.get_channel(int(adminChannel))
+    await channel.send(message)
+
 # @tree.command(name="vote", description="投票を行います")
 # async def vote(interaction: discord.Interaction, title: str, options: str):
 #     options = options.split()  # 選択肢を分割
@@ -843,4 +859,7 @@ def update_task():
 #             else:
 #                 del votes[payload.user_id]
 
-client.run(TOKEN)
+try:
+    client.run(TOKEN)
+except Exception as e:
+    send_console(e)
