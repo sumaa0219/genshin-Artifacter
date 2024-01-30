@@ -11,7 +11,7 @@ if not os.path.exists("VC"):
 
 def text_2_wav(text, speaker_id, max_retry=20):
     ut = time.time()
-    audio_file = f"VC/{ut}.wav"
+    audio_file = f"./VC/{ut}.wav"
     # 音声合成のための、クエリを作成
     query_payload = {"text": text, "speaker": speaker_id}
     for query_i in range(max_retry):
@@ -30,7 +30,7 @@ def text_2_wav(text, speaker_id, max_retry=20):
         response = requests.post("http://localhost:50021/synthesis",
                                  params=synth_payload,
                                  data=json.dumps(query_data),
-                                 timeout=10)
+                                 timeout=40)
         if response.status_code == 200:
             with open(audio_file, "wb") as fp:
                 fp.write(response.content)

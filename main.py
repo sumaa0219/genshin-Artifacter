@@ -669,6 +669,8 @@ async def on_message(message):
         # _hoge_置換
         read_msg = re.sub(r"_(.*?)_", r"\1", read_msg)
 
+        if len(read_msg) > 30:
+            read_msg = read_msg[:30] + '以下略'
         # debug
         try:
             await send_console(read_msg)
@@ -676,6 +678,7 @@ async def on_message(message):
             pass
 
         voiceFileName = voicevox.text_2_wav(read_msg, speaker_id)
+        await send_console(voiceFileName)
 
         # # 音声読み上げ
         enqueue(message.guild.voice_client, message.guild, discord.FFmpegPCMAudio(
