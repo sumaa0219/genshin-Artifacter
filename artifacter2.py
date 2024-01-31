@@ -45,6 +45,11 @@ def getData(UID):
     URL = "https://enka.network/api/uid/" + str(UID)
     print(URL)
     r = requests.get(URL)
+    status = r.status_code
+    if status == 424:
+        return "EnkaAPIが停止しています\nしばらくお待ちください"
+    elif status == 404:
+        return "UIDが違うか、キャラ詳細が公開されていません"
     response = r.json()
     DataBase = response["avatarInfoList"]
     PlayerINFO = response["playerInfo"]  # プレイヤー情報目次
@@ -79,7 +84,7 @@ def getData(UID):
     # print(showAvatarlist)
     # print(AvatarINFOlist)
 
-    return DataBase, showAvatarlist, PlayerInfo
+    return DataBase, showAvatarlist, PlayerInfo, status
 
 
 def getCharacterStatusfromselect(DataBase, showAvatarData, ScoreState, authorInfo):

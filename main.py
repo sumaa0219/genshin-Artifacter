@@ -139,11 +139,14 @@ class InputUID(ui.Modal):
 
             global DataBase, showAvatarlist, PlayerInfo
             try:
-                DataBase, showAvatarlist, PlayerInfo = arttifacter.getData(
+                DataBase, showAvatarlist, PlayerInfo, = arttifacter.getData(
                     int(self.uid.value))
             except:
-                interaction.response.send_message(
-                    "UIDが間違っているか、プロフィールの公開設定がされていません")
+                errer_msg = arttifacter.getData(
+                    int(self.uid.value))
+                await interaction.response.send_message(errer_msg)
+                return
+
             embed = discord.Embed(
                 title=PlayerInfo[0], color=discord.Color.blurple())
             embed.set_thumbnail(url=PlayerInfo[4])
