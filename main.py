@@ -306,7 +306,10 @@ def generate():
 async def build_command(interaction: discord.Interaction):
     User_UID_Data = pd.read_csv(
         "./assetData/user_UID_data.csv", header=None).values.tolist()
-    await send_console(f"<buid command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
+    try:
+        await send_console(f"<buid command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
+    except:
+        pass
 
     global defaultUID, defaultUser, modeFlag
     modeFlag = 0
@@ -672,20 +675,20 @@ async def on_message(message):
         # _hoge_置換
         read_msg = re.sub(r"_(.*?)_", r"\1", read_msg)
 
-        if len(read_msg) > 30:
-            read_msg = read_msg[:30] + '以下略'
+        if len(read_msg) > 40:
+            read_msg = read_msg[:40] + '以下略'
         # debug
-        try:
-            await send_console(read_msg)
-        except:
-            pass
 
         voiceFileName = voicevox.text_2_wav(read_msg, speaker_id)
-        await send_console(voiceFileName)
 
         # # 音声読み上げ
         enqueue(message.guild.voice_client, message.guild, discord.FFmpegPCMAudio(
             voiceFileName))
+
+        try:
+            await send_console(read_msg)
+        except:
+            pass
 
         # # 音声ファイル削除
         with wave.open(voiceFileName, "rb")as f:
@@ -732,7 +735,14 @@ async def on_voice_state_update(member, before, after):
         except:
             pass
 
-        voiceFileName = voicevox.text_2_wav(read_msg, 30)
+        with open("./VC/user_speaker.json", "r", encoding="UTF-8")as f:
+            speaker = json.load(f)
+        try:
+            speaker_id = int(speaker[str(member.id)])
+        except:
+            speaker_id = 8
+
+        voiceFileName = voicevox.text_2_wav(read_msg, speaker_id)
 
         # print(member.guild.voice_client, member.guild)
         # # # 音声読み上げ
