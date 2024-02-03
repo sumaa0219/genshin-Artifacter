@@ -344,7 +344,7 @@ async def delete_messages(interaction: discord.Interaction, member: discord.Memb
         if message.author == member and maxcuount < limit:
             await message.delete()
             maxcuount += 1
-            time.sleep(0.5)
+            time.sleep(0.1)
     await interaction.followup.send(
         f"{member.display_name}'s last {limit} messages deleted."
     )
