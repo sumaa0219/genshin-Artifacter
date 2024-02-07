@@ -22,6 +22,7 @@ import voicevox
 from collections import defaultdict, deque
 import wave
 import glob
+import tempfile
 
 load_dotenv()
 
@@ -36,6 +37,7 @@ adminChannel = os.environ['adminChannel']
 baseURL = "https://enka.network/ui/"
 
 connected_channel = {}
+vc_connected_channel = {}
 
 
 with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_file:
@@ -462,6 +464,7 @@ def setOriginalCharacter(url, mode, Name, userName, beforName=None):
 
 @tree.command(name="join", description="ボイスチャンネルに接続します")
 async def join(interaction: discord.Interaction):
+    clear_queue(interaction.guild_id)
     await send_console(f"<join command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
     if interaction.user.voice is None:
         await interaction.response.send_message("ボイスチャンネルに接続していません", ephemeral=True)
@@ -471,10 +474,13 @@ async def join(interaction: discord.Interaction):
         await interaction.guild.voice_client.move_to(interaction.user.voice.channel)
         await interaction.response.send_message("ボイスチャンネルを移動しました", ephemeral=False)
         return
+    connected_channel[int(interaction.guild_id)] = interaction.channel_id
+    vc_connected_channel[int(interaction.guild_id)
+                         ] = interaction.user.voice.channel.id
+    print(connected_channel, vc_connected_channel)
 
     await interaction.user.voice.channel.connect()
     await interaction.response.send_message("接続しました")
-    connected_channel[interaction.guild_id] = interaction.channel_id
 
 # ボイスチャンネルから切断
 
@@ -616,6 +622,11 @@ def play(voice_client, queue):
     voice_client.play(source, after=lambda e: play(voice_client, queue))
 
 
+def clear_queue(guild_id):
+    if guild_id in queue_dict:
+        del queue_dict[guild_id]
+
+
 @client.event
 async def on_message(message):
 
@@ -639,17 +650,6 @@ async def on_message(message):
             speaker_id = int(speaker[str(message.author.id)])
         except:
             speaker_id = 8
-
-        # 辞書置換
-        if os.path.isfile(f"./VC/{message.guild.id}.json"):
-            with open(f"./VC/{message.guild.id}.json", "r", encoding="UTF-8")as f:
-                word = json.load(f)
-            read_list = []  # あとでまとめて変換するときの読み仮名リスト
-            # one_dicは単語と読みのタプル。添字はそれぞれ0と1。
-            for i, one_dic in enumerate(word.items()):
-                read_msg = read_msg.replace(one_dic[0], '{'+str(i)+'}')
-                read_list.append(one_dic[1])  # 変換が発生した順に読みがなリストに追加
-            read_msg = read_msg.format(*read_list)  # 読み仮名リストを引数にとる
 
         # URL置換
         read_msg = re.sub(r"https?://.*?\s|https?://.*?$", "URL", read_msg)
@@ -675,28 +675,42 @@ async def on_message(message):
         # _hoge_置換
         read_msg = re.sub(r"_(.*?)_", r"\1", read_msg)
 
-        if len(read_msg) > 40:
-            read_msg = read_msg[:40] + '以下略'
-        # debug
-
-        voiceFileName = voicevox.text_2_wav(read_msg, speaker_id)
-
-        # # 音声読み上げ
-        enqueue(message.guild.voice_client, message.guild, discord.FFmpegPCMAudio(
-            voiceFileName))
+        # 辞書置換
+        if os.path.isfile(f"./VC/{message.guild.id}.json"):
+            with open(f"./VC/{message.guild.id}.json", "r", encoding="UTF-8")as f:
+                word = json.load(f)
+            read_list = []  # あとでまとめて変換するときの読み仮名リスト
+            # one_dicは単語と読みのタプル。添字はそれぞれ0と1。
+            for i, one_dic in enumerate(word.items()):
+                read_msg = read_msg.replace(one_dic[0], '{'+str(i)+'}')
+                read_list.append(one_dic[1])  # 変換が発生した順に読みがなリストに追加
+            read_msg = read_msg.format(*read_list)  # 読み仮名リストを引数にとる
 
         try:
-            await send_console(read_msg)
+            await send_console("**"+message.guild.name+"**"+message.author.name+":"+read_msg)
         except:
             pass
 
-        # # 音声ファイル削除
-        with wave.open(voiceFileName, "rb")as f:
-            wave_length = (f.getnframes() / f.getframerate()/100)  # 再生時間
-        # logger.info(f"PlayTime:{wave_length}")
-        await asyncio.sleep(wave_length + 10)
+        if len(read_msg) > 40:
+            read_msg = read_msg[:40] + '以下略'
+        # debug
+        # 音声読み上げ
+        voice_data = voicevox.text_2_wav(read_msg, speaker_id)
 
-        os.remove(voiceFileName)
+        # BytesIOオブジェクトを作成
+        byte_io = BytesIO(voice_data)
+
+        # 音声を再生
+        source = discord.FFmpegPCMAudio(byte_io, pipe=True)
+        enqueue(message.guild.voice_client, message.guild, source)
+
+        # # # 音声ファイル削除
+        # with wave.open(voiceFileName, "rb")as f:
+        #     wave_length = (f.getnframes() / f.getframerate()/100)  # 再生時間
+        # # logger.info(f"PlayTime:{wave_length}")
+        # await asyncio.sleep(wave_length + 10)
+
+        # os.remove(voiceFileName)
 
     # URL自動変換
 
@@ -719,16 +733,17 @@ async def on_message(message):
 
 @client.event
 async def on_voice_state_update(member, before, after):
+    read_msg = ""
+    print(queue_dict)
     if (member.guild.voice_client is not None and member.id != client.user.id and member.guild.voice_client.channel is before.channel and len(member.guild.voice_client.channel.members) == 1):  # ボイスチャンネルに自分だけ参加していたら
         await member.guild.voice_client.disconnect()
         return
 
-    if after is not before and after.self_mute is before.self_mute and after.self_stream is before.self_stream and after.self_deaf is before.self_deaf:
-        await asyncio.sleep(1)
-        if before.channel is None:
-            read_msg = f"{member.display_name}が参加しました"
-        elif after.channel is None:
+    if before.channel is not None and client.user in before.channel.members or after.channel is not None and client.user in after.channel.members:
+        if before.channel is not None and before.channel != after.channel and client.user in before.channel.members:
             read_msg = f"{member.display_name}が退出しました"
+        if after.channel is not None and before.channel != after.channel and client.user in after.channel.members:
+            read_msg = f"{member.display_name}が参加しました"
 
         try:
             await send_console(f"<Status chenged viceChannel>**{member.guild.name}**  :{read_msg}")
@@ -742,21 +757,30 @@ async def on_voice_state_update(member, before, after):
         except:
             speaker_id = 8
 
-        voiceFileName = voicevox.text_2_wav(read_msg, speaker_id)
+        # 辞書置換
+        if os.path.isfile(f"./VC/{member.guild.id}.json"):
+            with open(f"./VC/{member.guild.id}.json", "r", encoding="UTF-8")as f:
+                word = json.load(f)
+            read_list = []  # あとでまとめて変換するときの読み仮名リスト
+            # one_dicは単語と読みのタプル。添字はそれぞれ0と1。
+            for i, one_dic in enumerate(word.items()):
+                read_msg = read_msg.replace(one_dic[0], '{'+str(i)+'}')
+                read_list.append(one_dic[1])  # 変換が発生した順に読みがなリストに追加
+            read_msg = read_msg.format(*read_list)  # 読み仮名リストを引数にとる
 
-        # print(member.guild.voice_client, member.guild)
-        # # # 音声読み上げ
-        if member.guild.voice_client and member.guild.voice_client.is_connected():
-            enqueue(member.guild.voice_client, member.guild, discord.FFmpegPCMAudio(
-                voiceFileName))
+        voice_data = voicevox.text_2_wav(read_msg, speaker_id)
 
-            # 音声ファイル削除
-            with wave.open(voiceFileName, "rb")as f:
-                wave_length = (f.getnframes() / f.getframerate()/100)  # 再生時間
+        # BytesIOオブジェクトを作成
+        byte_io = BytesIO(voice_data)
 
-            await asyncio.sleep(wave_length + 3)
+        # 音声を再生
+        source = discord.FFmpegPCMAudio(byte_io, pipe=True)
+        enqueue(member.guild.voice_client, member.guild, source)
 
-        os.remove(voiceFileName)
+        try:
+            await send_console(read_msg)
+        except:
+            pass
 
 
 @tree.command(name="addtask", description="指定時間に毎日送信するメッセージ追加できます。メッセージはこのコマンドが使われたところに送信されます")
