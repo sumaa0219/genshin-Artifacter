@@ -4,3 +4,4 @@ ArtifacterImageGen/date.json
 __pycache__
 *.wav
 .python-version
+start.sh
