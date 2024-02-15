@@ -906,6 +906,14 @@ async def send_console(message):
     channel = guild.get_channel(int(adminChannel))
     await channel.send(message)
 
+
+@tree.command(name="adminsay", description="開発者専用")
+async def send_message(interaction: discord.Interaction, guild_id: str, channel_id: str, message: str):
+    guild = client.get_guild(int(guild_id))
+    channel = guild.get_channel(int(channel_id))
+    await channel.send(message)
+    await interaction.response.send_message("送信完了")
+
 # @tree.command(name="vote", description="投票を行います")
 # async def vote(interaction: discord.Interaction, title: str, options: str):
 #     options = options.split()  # 選択肢を分割
