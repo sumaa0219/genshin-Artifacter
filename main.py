@@ -477,10 +477,10 @@ async def join(interaction: discord.Interaction):
     connected_channel[int(interaction.guild_id)] = interaction.channel_id
     vc_connected_channel[int(interaction.guild_id)
                          ] = interaction.user.voice.channel.id
-    print(connected_channel, vc_connected_channel)
 
-    await interaction.user.voice.channel.connect()
     await interaction.response.send_message("接続しました")
+    await interaction.user.voice.channel.connect()
+
 
 # ボイスチャンネルから切断
 
