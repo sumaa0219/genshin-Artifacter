@@ -9,7 +9,6 @@ import pandas as pd
 import asyncio
 import time
 import ArtifacterImageGen.Generater as gen
-import csv
 import json
 import requests
 import datetime
@@ -20,21 +19,33 @@ import pprint
 import re
 import voicevox
 from collections import defaultdict, deque
-import wave
 import glob
-import tempfile
+import argparse
+import HSRImageGen.HSR as HSR
+import HSRImageGen.format as HSRformat
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--debug", action="store_true", help="Use the debug token")
+args = parser.parse_args()
 
 load_dotenv()
 
+if args.debug:
+    TOKEN = os.environ['debug']
+    adminChannel = os.environ['adminDebugChannel']
+    print("------------------debug mode------------------")
+else:
+    TOKEN = os.environ['token']
+    adminChannel = os.environ['adminChannel']
 
-TOKEN = os.environ['token']
 
 adminID = os.environ['adminID']
 
 adminServer = os.environ['adminServer']
-adminChannel = os.environ['adminChannel']
+
 
 baseURL = "https://enka.network/ui/"
+baseHsrUrl = "https://enka.network/ui/hsr/"
 
 connected_channel = {}
 vc_connected_channel = {}
@@ -45,6 +56,7 @@ with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_fil
 
 with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
     nameItem = json.load(json_file)
+
 
 # mac用
 # discord.opus.load_opus("libopus.dylib")
@@ -60,6 +72,7 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 flag = 0
 defaultUID = None
+default_HSR_UID = None
 modeFlag = 0
 
 
@@ -95,6 +108,76 @@ async def on_ready():
 
     # タスクを開始
     task_message.start()
+
+
+class inputHSRUID(ui.Modal):
+    def __init__(self):
+        super().__init__(
+            title="崩壊スターレイルのUIDを入力してください",
+        )
+        self.uid = discord.ui.TextInput(
+            label="UID",
+            default=default_HSR_UID,
+        )
+        self.add_item(self.uid)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        global default_HSR_UID, defaultUser
+        if interaction.user.id == defaultUser or interaction.user.id == int(adminID):
+
+            # すでに登録されているUIDを取得もしくは新規登録
+            User_UID_Data_HSR = pd.read_csv(
+                "./assetData/user_UID_data_hsr.csv", header=None).values.tolist()
+            wronFlag = 0
+
+            for i, x in enumerate(User_UID_Data_HSR):
+                if x[0] == interaction.user.id:  # ID同じ場合
+                    if int(x[1]) == int(self.uid.value):  # 同じかつUIDが同じ場合
+                        pass
+                    elif int(x[1]) is not int(self.uid.value):  # UIDだけ違う場合
+                        User_UID_Data_HSR[i][1] = int(self.uid.value)
+                        pd.DataFrame(User_UID_Data_HSR).to_csv(
+                            "./assetData/user_UID_data_hsr.csv", index=False, header=False)
+                else:  # IDが違う
+                    wronFlag += 1
+
+            if wronFlag == len(User_UID_Data_HSR):
+                new = [int(interaction.user.id), int(self.uid.value), None]
+                User_UID_Data_HSR.append(new)
+                await send_console(User_UID_Data_HSR)
+
+                pd.DataFrame(User_UID_Data_HSR).to_csv(
+                    "./assetData/user_UID_data_hsr.csv", index=False, header=False)
+
+            # プレイヤーデータの取得
+            try:
+                playerInfo, showCharaInfoList = HSR.getInfo(
+                    int(self.uid.value))
+            except:
+                errer_msg = HSR.getInfo(
+                    int(self.uid.value))
+                await interaction.response.send_message(errer_msg)
+                return
+            embed = discord.Embed(
+                title=playerInfo.name, color=discord.Color.blurple())
+            embed.set_thumbnail(url=baseHsrUrl +
+                                HSR.getAvatorURL(int(playerInfo.headIcon)))
+            embed.add_field(name="開拓者レベル", value=playerInfo.level)
+            embed.add_field(name="均衡レベル", value=playerInfo.worldLevel)
+            embed.add_field(name="フレンド数", value=playerInfo.friendCount)
+            view = SelectHSRCharacter()
+            embed.set_footer(text="UID: " + str(self.uid.value))
+            await send_console("UID:"+str(self.uid.value))
+
+            for i, x in enumerate(showCharaInfoList):
+                view.selectMenu.add_option(
+                    label=HSR.getNamefromHash("ja",
+                                              str(HSR.getCharacaterInfo(str(x.nameId))["AvatarName"]["Hash"])),
+                    description="Lv:" + str(x.level),
+                    value=i,
+                )
+
+            await interaction.response.send_message(embeds=[embed], view=view)
 
 
 class InputUID(ui.Modal):
@@ -185,6 +268,24 @@ class InputUID(ui.Modal):
             #     await asyncio.sleep(1)
         else:
             print("your not same person", interaction.user.id)
+
+
+class SelectHSRCharacter(ui.View):
+    @discord.ui.select(
+        cls=ui.Select,
+        placeholder="キャラクターを選択",
+
+
+    )
+    async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
+        if interaction.user.id == defaultUser or interaction.user.id == adminID:
+
+            global selectCharacterID, default_HSR_UID
+            selectCharacterID = select.values[0]
+            res = HSR.getDataFromUID(default_HSR_UID)
+            HSRformat.formatCharaData(
+                res["detailInfo"]["avatarDetailList"][int(selectCharacterID)])
+            await interaction.response.is_done()
 
 
 class SelectCharacter(ui.View):
@@ -304,12 +405,37 @@ def generate():
     gen.generation(gen.read_json('ArtifacterImageGen/data.json'))
 
 
-@tree.command(name="build", description="UIDから聖遺物ビルドを生成します")
+@tree.command(name="buidhsr", description="崩壊スターレイルのUIDから遺物ビルドを生成します")
+async def buid_hsr(interaction: discord.Interaction):
+    global defaultUser, default_HSR_UID
+    User_UID_Data_HSR = pd.read_csv(
+        "./assetData/user_UID_data_hsr.csv", header=None).values.tolist()
+    try:
+        await send_console(f"<HSR buid command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
+    except:
+        pass
+
+    defaultUser = interaction.user.id
+    default_HSR_UID = None
+    for x in User_UID_Data_HSR:
+
+        if x[0] == interaction.user.id:
+            default_HSR_UID = x[1]
+
+        else:
+            if default_HSR_UID == None:
+                default_HSR_UID = None
+    # print(defaultUID)
+    modal = inputHSRUID()
+    await interaction.response.send_modal(modal)
+
+
+@tree.command(name="build", description="原神のUIDから聖遺物ビルドを生成します")
 async def build_command(interaction: discord.Interaction):
     User_UID_Data = pd.read_csv(
         "./assetData/user_UID_data.csv", header=None).values.tolist()
     try:
-        await send_console(f"<buid command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
+        await send_console(f"<Genshin buid command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
     except:
         pass
 
@@ -914,6 +1040,21 @@ async def send_message(interaction: discord.Interaction, guild_id: str, channel_
     await channel.send(message)
     await interaction.response.send_message("送信完了")
 
+
+@tree.command(name="palstart", description="パルワールドサーバーを起動します")
+async def palstart(interaction: discord.Interaction):
+    await interaction.response.defer()
+    os.system("steamcmd +login anonymous +app_update 2394010 validate +quit")
+    os.system("sudo systemctl start PalServer")
+    await interaction.followup.send("起動完了 sssumaa.com:8211")
+
+
+@tree.command(name="palstop", description="パルワールドサーバーを停止します")
+async def palstop(interaction: discord.Interaction):
+    await interaction.response.defer()
+    os.system("sudo systemctl stop PalServer")
+    await interaction.followup.send("停止完了")
+
 # @tree.command(name="vote", description="投票を行います")
 # async def vote(interaction: discord.Interaction, title: str, options: str):
 #     options = options.split()  # 選択肢を分割
@@ -965,7 +1106,5 @@ async def send_message(interaction: discord.Interaction, guild_id: str, channel_
 #             else:
 #                 del votes[payload.user_id]
 
-try:
-    client.run(TOKEN)
-except Exception as e:
-    send_console(e)
+
+client.run(TOKEN)
