@@ -23,6 +23,7 @@ import glob
 import argparse
 import HSRImageGen.HSR as HSR
 import HSRImageGen.format as HSRformat
+import HSRImageGen.imageGen as HSRImageGen
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--debug", action="store_true", help="Use the debug token")
@@ -131,18 +132,18 @@ class inputHSRUID(ui.Modal):
             wronFlag = 0
 
             for i, x in enumerate(User_UID_Data_HSR):
-                if x[0] == interaction.user.id:  # ID同じ場合
+                if int(x[0]) == interaction.user.id:  # ID同じ場合
                     if int(x[1]) == int(self.uid.value):  # 同じかつUIDが同じ場合
                         pass
                     elif int(x[1]) is not int(self.uid.value):  # UIDだけ違う場合
-                        User_UID_Data_HSR[i][1] = int(self.uid.value)
+                        User_UID_Data_HSR[i][1] = str(self.uid.value)
                         pd.DataFrame(User_UID_Data_HSR).to_csv(
                             "./assetData/user_UID_data_hsr.csv", index=False, header=False)
                 else:  # IDが違う
                     wronFlag += 1
 
             if wronFlag == len(User_UID_Data_HSR):
-                new = [int(interaction.user.id), int(self.uid.value), None]
+                new = [str(interaction.user.id), str(self.uid.value)]
                 User_UID_Data_HSR.append(new)
                 await send_console(User_UID_Data_HSR)
 
@@ -278,14 +279,20 @@ class SelectHSRCharacter(ui.View):
 
     )
     async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
-        if interaction.user.id == defaultUser or interaction.user.id == adminID:
+        global default_HSR_UID, defaultUser
+        if interaction.user.id == int(defaultUser) or interaction.user.id == adminID:
 
-            global selectCharacterID, default_HSR_UID
+            global selectCharacterID
             selectCharacterID = select.values[0]
+            await interaction.response.defer(thinking=True)
             res = HSR.getDataFromUID(default_HSR_UID)
-            HSRformat.formatCharaData(
+            charaInfoData, weaponInfo, relicList, skillList, relicSetList = HSRformat.formatCharaData(
                 res["detailInfo"]["avatarDetailList"][int(selectCharacterID)])
-            await interaction.response.is_done()
+            HSRImageGen.HSR_generate(
+                "ja", charaInfoData, weaponInfo, relicList, skillList, relicSetList)
+            time.sleep(0.5)
+            await interaction.message.delete()
+            await interaction.followup.send(content="", file=discord.File(fp="HSRImageGen/output.png"))
 
 
 class SelectCharacter(ui.View):
@@ -405,7 +412,7 @@ def generate():
     gen.generation(gen.read_json('ArtifacterImageGen/data.json'))
 
 
-@tree.command(name="buidhsr", description="崩壊スターレイルのUIDから遺物ビルドを生成します")
+@tree.command(name="buildhsr", description="崩壊スターレイルのUIDから遺物ビルドを生成します")
 async def buid_hsr(interaction: discord.Interaction):
     global defaultUser, default_HSR_UID
     User_UID_Data_HSR = pd.read_csv(

@@ -1,6 +1,8 @@
 import json
-from pydantic import BaseModel
 from collections import Counter
+import HSRImageGen.score as score
+from HSRImageGen.imageGen import status, relic, elementAddedRatio, charaInfo, statusInfo, weapon, skill, setList
+
 
 with open('API-docs/store/hsr/honker_weps.json', 'r', encoding="utf-8") as json_file:
     HSR_weps = json.load(json_file)
@@ -17,91 +19,8 @@ with open('API-docs/store/hsr/honker_meta.json', 'r', encoding="utf-8") as json_
 with open('API-docs/store/hsr/honker_skills.json', 'r', encoding="utf-8") as json_file:
     HSR_skills = json.load(json_file)
 
-
-class elementAddedRatio(BaseModel):
-    element: str
-    value: float
-
-
-class charaInfo(BaseModel):
-    nameID: int
-    nameHash: int
-    level: int
-    promotion: int
-    element: str
-    avatarBaseType: str
-    HP: float
-    ATK: float
-    DEF: float
-    speed: float
-    critical_per: float
-    criticak_Dmg: float
-    breakDamageAddedRatio: float
-    SPRatio: float
-    statusProbability: float
-    statusResistanc: float
-    elementAddedRatio: elementAddedRatio
-
-
-class statusInfo(BaseModel):
-    HP: float
-    HP_per: float
-    ATK: float
-    ATK_per: float
-    DEF: float
-    DEF_per: float
-    speed: float
-    critical_per: float
-    criticak_Dmg: float
-    breakDamageAddedRatio: float
-    SPRatio: float
-    statusProbability: float
-    statusResistanc: float
-    elementAddedRatio: elementAddedRatio
-
-
-class status(BaseModel):
-    type: str
-    value: float
-
-
-class weapon(BaseModel):
-    nameID: int
-    level: int
-    rank: int
-    promotion: int
-    rarity: str
-    avatarBaseType: str
-    equipmentNameHash: int
-    imagePath: str
-    nameHash: int
-    statusList: list
-    addedStatusList: list
-
-
-class relic(BaseModel):
-    nameID: int
-    level: int
-    type: str
-    rarity: str
-    mainStatus: status
-    imagePath: str
-    setID: int
-    subAffix: list
-
-
-class skill(BaseModel):
-    level: int
-    pointID: int
-    addedStatusList: list
-    imagePath: str
-
-
-class setList(BaseModel):
-    setID: int
-    setNameHash: int
-    setCount: list
-    setEffectlist: list
+with open('API-docs/store/hsr/honker_ranks.json', 'r', encoding="utf-8") as json_file:
+    HSR_ranks = json.load(json_file)
 
 
 def formatCharaData(allCharaData):
@@ -114,6 +33,9 @@ def formatCharaData(allCharaData):
         promotion=allCharaData["promotion"],
         element="",
         avatarBaseType="",
+        imagePath="",
+        rank=0,
+        rankImagePathList=[],
         HP=0,
         ATK=0,
         DEF=0,
@@ -121,7 +43,7 @@ def formatCharaData(allCharaData):
         critical_per=0,
         criticak_Dmg=0,
         breakDamageAddedRatio=0,
-        SPRatio=0,
+        SPRatio=1.0,
         statusProbability=0,
         statusResistanc=0,
         elementAddedRatio=elementAddedRatio(
@@ -129,6 +51,33 @@ def formatCharaData(allCharaData):
             value=0
         )
     )
+    charaInfoData.nameHash = HSR_chara[str(
+        charaInfoData.nameID)]["AvatarName"]["Hash"]
+    charaInfoData.element = HSR_chara[str(charaInfoData.nameID)]["Element"]
+    charaInfoData.avatarBaseType = HSR_chara[str(
+        charaInfoData.nameID)]["AvatarBaseType"]
+    charaInfoData.imagePath = HSR_chara[str(
+        charaInfoData.nameID)]["AvatarCutinFrontImgPath"]
+
+    try:
+        charaInfoData.rank = allCharaData["rank"]
+    except:
+        pass
+
+    levelCorrection = 1
+    charaInfoData.HP = float(HSR_meta["avatar"][str(charaInfoData.nameID)][str(charaInfoData.promotion)]["HPBase"]) + float(
+        HSR_meta["avatar"][str(charaInfoData.nameID)][str(charaInfoData.promotion)]["HPAdd"])*(float(charaInfoData.level) - levelCorrection)
+    charaInfoData.ATK = float(HSR_meta["avatar"][str(charaInfoData.nameID)][str(charaInfoData.promotion)]["AttackBase"]) + float(
+        HSR_meta["avatar"][str(charaInfoData.nameID)][str(charaInfoData.promotion)]["AttackAdd"])*(float(charaInfoData.level) - levelCorrection)
+    charaInfoData.DEF = float(HSR_meta["avatar"][str(charaInfoData.nameID)][str(charaInfoData.promotion)]["DefenceBase"]) + float(
+        HSR_meta["avatar"][str(charaInfoData.nameID)][str(charaInfoData.promotion)]["DefenceAdd"])*(float(charaInfoData.level) - levelCorrection)
+    charaInfoData.speed = HSR_meta["avatar"][str(
+        charaInfoData.nameID)][str(charaInfoData.promotion)]["SpeedBase"]
+    charaInfoData.critical_per = HSR_meta["avatar"][str(
+        charaInfoData.nameID)][str(charaInfoData.promotion)]["CriticalChance"]
+    charaInfoData.criticak_Dmg = HSR_meta["avatar"][str(
+        charaInfoData.nameID)][str(charaInfoData.promotion)]["CriticalDamage"]
+
     statusInfos = statusInfo(
         HP=0,
         HP_per=0,
@@ -150,148 +99,192 @@ def formatCharaData(allCharaData):
     )
 
     # 武器情報の取得
-    weaponInfo = weapon(
-        nameID=allCharaData["equipment"]["tid"],
-        level=allCharaData["equipment"]["level"],
-        rank=allCharaData["equipment"]["rank"],
-        promotion=allCharaData["equipment"]["promotion"],
-        rarity="",
-        avatarBaseType="",
-        equipmentNameHash=0,
-        imagePath="",
-        nameHash=0,
-        statusList=[],
-        addedStatusList=[]
-    )
-    weaponInfo.rarity = HSR_weps[str(weaponInfo.nameID)]["Rarity"]
-    weaponInfo.avatarBaseType = HSR_weps[str(
-        weaponInfo.nameID)]["AvatarBaseType"]
-    weaponInfo.equipmentNameHash = HSR_weps[str(
-        weaponInfo.nameID)]["EquipmentName"]["Hash"]
-    weaponInfo.imagePath = HSR_weps[str(weaponInfo.nameID)]["ImagePath"]
-    weaponInfo.nameHash = allCharaData["equipment"]["_flat"]["name"]
-
-    for wepAddedStatus in allCharaData["equipment"]["_flat"]["props"]:
-        statusdata = status(
-            type=wepAddedStatus["type"],
-            value=wepAddedStatus["value"]
+    try:
+        weaponInfo = weapon(
+            nameID=allCharaData["equipment"]["tid"],
+            level=allCharaData["equipment"]["level"],
+            rank=allCharaData["equipment"]["rank"],
+            promotion=allCharaData["equipment"]["promotion"],
+            rarity="",
+            avatarBaseType="",
+            equipmentNameHash=0,
+            imagePath="",
+            nameHash=0,
+            statusList=[],
+            addedStatusList=[]
         )
-        addStatus(statusInfos, statusdata.type, statusdata.value)
-        weaponInfo.statusList.append(statusdata)
+        weaponInfo.rarity = HSR_weps[str(weaponInfo.nameID)]["Rarity"]
+        weaponInfo.avatarBaseType = HSR_weps[str(
+            weaponInfo.nameID)]["AvatarBaseType"]
+        weaponInfo.equipmentNameHash = HSR_weps[str(
+            weaponInfo.nameID)]["EquipmentName"]["Hash"]
+        weaponInfo.imagePath = HSR_weps[str(weaponInfo.nameID)]["ImagePath"]
+        weaponInfo.nameHash = allCharaData["equipment"]["_flat"]["name"]
 
-    for wepAddedStatus in HSR_meta["equipmentSkill"][str(weaponInfo.nameID)][str(weaponInfo.rank)]["props"].keys():
-        statusdata = status(
-            type=wepAddedStatus,
-            value=HSR_meta["equipmentSkill"][str(weaponInfo.nameID)][str(
-                weaponInfo.rank)]["props"][wepAddedStatus]
-        )
-        addStatus(statusInfos, statusdata.type, statusdata.value)
-        weaponInfo.addedStatusList.append(statusdata)
-
-    # 遺物情報の取得
-    relicList = []
-    for relicData in allCharaData["relicList"]:
-        print("--------")
-        relicInfo = relic(
-            nameID=relicData["tid"],
-            level=relicData["level"],
-            type="",
-            rarity=str(HSR_relics[str(relicData["tid"])]
-                       ["Rarity"]),  # 整数を文字列に変換
-            mainStatus=status(
-                type="",
-                value=0
-            ),
-            subAffix=[],
-            imagePath=HSR_relics[str(relicData["tid"])
-                                 ]["Icon"],  # imagePathを追加
-            setID=HSR_relics[str(relicData["tid"])]["SetID"]  # setIDを追加
-        )
-        relicInfo.type = HSR_relics[str(relicData["tid"])]["Type"]
-        relicInfo.mainStatus.type = relicData["_flat"]["props"][0]["type"]
-        relicInfo.mainStatus.value = relicData["_flat"]["props"][0]["value"]
-
-        addStatus(statusInfos, relicInfo.mainStatus.type,
-                  relicInfo.mainStatus.value)
-
-        for subStatus in relicData["_flat"]["props"][1:]:
-            subStatusInfo = status(
-                type=subStatus["type"],
-                value=subStatus["value"]
+        for wepAddedStatus in allCharaData["equipment"]["_flat"]["props"]:
+            statusdata = status(
+                type=wepAddedStatus["type"],
+                value=wepAddedStatus["value"]
             )
-            addStatus(statusInfos, subStatusInfo.type, subStatusInfo.value)
-            relicInfo.subAffix.append(subStatusInfo)
-        relicList.append(relicInfo)
+            addStatus(charaInfoData, statusdata.type, statusdata.value)
+            weaponInfo.statusList.append(statusdata)
 
-    # スキル情報の取得
-    skillList = []
-    for skillData in allCharaData["skillTreeList"]:
-        skillInfo = skill(
-            level=skillData["level"],
-            pointID=skillData["pointId"],
-            addedStatusList=[],
-            imagePath=""
-        )
-        skillInfo.imagePath = HSR_skills[str(skillInfo.pointID)]["IconPath"]
         try:
-            for skillAddedStatus in HSR_meta["tree"][str(skillInfo.pointID)]["1"]["props"].keys():
+            for wepAddedStatus in HSR_meta["equipmentSkill"][str(weaponInfo.nameID)][str(weaponInfo.rank)]["props"].keys():
                 statusdata = status(
-                    type=skillAddedStatus,
-                    value=HSR_meta["tree"][str(
-                        skillInfo.pointID)]["1"]["props"][skillAddedStatus]
+                    type=wepAddedStatus,
+                    value=HSR_meta["equipmentSkill"][str(weaponInfo.nameID)][str(
+                        weaponInfo.rank)]["props"][wepAddedStatus]
                 )
                 addStatus(statusInfos, statusdata.type, statusdata.value)
-                print(statusdata.value)
-                skillInfo.addedStatusList.append(statusdata)
+                weaponInfo.addedStatusList.append(statusdata)
         except:
             pass
-        skillList.append(skillInfo)
+    except:
+        weaponInfo = None
+
+    # 遺物情報の取得
+    try:
+        relicList = []
+        for relicData in allCharaData["relicList"]:
+            relicInfo = relic(
+                nameID=relicData["tid"],
+                level=relicData["level"],
+                type="",
+                rarity=str(HSR_relics[str(relicData["tid"])]
+                           ["Rarity"]),  # 整数を文字列に変換
+                mainStatus=status(
+                    type="",
+                    value=0
+                ),
+                subAffix=[],
+                score=0,
+                imagePath=HSR_relics[str(relicData["tid"])
+                                     ]["Icon"],  # imagePathを追加
+                setID=HSR_relics[str(relicData["tid"])]["SetID"]  # setIDを追加
+            )
+            relicInfo.type = HSR_relics[str(relicData["tid"])]["Type"]
+            relicInfo.mainStatus.type = relicData["_flat"]["props"][0]["type"]
+            relicInfo.mainStatus.value = relicData["_flat"]["props"][0]["value"]
+
+            addStatus(statusInfos, relicInfo.mainStatus.type,
+                      relicInfo.mainStatus.value)
+
+            for subStatus in relicData["_flat"]["props"][1:]:
+                subStatusInfo = status(
+                    type=subStatus["type"],
+                    value=subStatus["value"]
+                )
+                addStatus(statusInfos, subStatusInfo.type, subStatusInfo.value)
+                relicInfo.subAffix.append(subStatusInfo)
+
+            relicInfo.score = score.calculationScore(
+                charaInfoData.nameID, relicInfo)
+            relicList.append(relicInfo)
+    except:
+        relicList = []
+
+    skillAddedfromRankList = []
+    # 凸数に応じたスキルレベル補正
+    for rankID in HSR_chara[str(charaInfoData.nameID)]["RankIDList"]:
+        rankImagePath = HSR_ranks[str(rankID)]["IconPath"]
+        for skillAddedLevel in HSR_ranks[str(rankID)]["SkillAddLevelList"].keys():
+            skillAddedLevelfor = skillAddedLevel[:-
+                                                 1] + "0" + skillAddedLevel[-1]
+            skillAddedfromRankList.append(
+                {skillAddedLevelfor: HSR_ranks[str(rankID)]["SkillAddLevelList"][skillAddedLevel]})
+        charaInfoData.rankImagePathList.append(rankImagePath)
+
+    # スキル情報の取得
+    try:
+        skillList = []
+        for skillData in allCharaData["skillTreeList"]:
+            skillInfo = skill(
+                level=skillData["level"],
+                pointID=skillData["pointId"],
+                addedStatusList=[],
+                imagePath=""
+            )
+            if skillAddedfromRankList is not None:
+                for i, skillAddedLevel in enumerate(skillAddedfromRankList):
+                    for skillID in skillAddedLevel.keys():
+                        if int(skillInfo.pointID) == int(skillID):
+                            skillInfo.level += int(
+                                skillAddedfromRankList[i][skillID])
+            skillInfo.imagePath = HSR_skills[str(
+                skillInfo.pointID)]["IconPath"]
+            try:
+                for skillAddedStatus in HSR_meta["tree"][str(skillInfo.pointID)]["1"]["props"].keys():
+                    statusdata = status(
+                        type=skillAddedStatus,
+                        value=HSR_meta["tree"][str(
+                            skillInfo.pointID)]["1"]["props"][skillAddedStatus]
+                    )
+                    addStatus(statusInfos, statusdata.type, statusdata.value)
+                    skillInfo.addedStatusList.append(statusdata)
+            except:
+                pass
+            skillList.append(skillInfo)
+    except:
+        skillList = []
 
     # 遺物セット効果の取得
-    relicSetList = []
-    setlistNum = []
-    for reliclist in relicList:
-        setlistNum.append(reliclist.setID)
-    # 各数字の出現回数を数える
-    num_counts = Counter(setlistNum)
+    try:
+        relicSetList = []
+        setlistNum = []
+        for reliclist in relicList:
+            setlistNum.append(reliclist.setID)
+        # 各数字の出現回数を数える
+        num_counts = Counter(setlistNum)
 
-    # 結果を表示
-    for num, count in num_counts.items():
-        # 2セット以上の場合は2セットにする
-        if count >= 2:
-            setListInfo = setList(
-                setID=num,
-                setNameHash=0,
-                setCount=[2],
-                setEffectlist=[]
-            )
-            # 4セット以上の場合は4セットにする
-            if count >= 4:
-                setListInfo.setCount.append(4)
+        # 結果を表示
+        for num, count in num_counts.items():
+            # 2セット以上の場合は2セットにする
+            if count >= 2:
+                setListInfo = setList(
+                    setID=num,
+                    setNameHash=0,
+                    setCount=[2],
+                    setEffectlist=[]
+                )
+                # 4セット以上の場合は4セットにする
+                if count >= 4:
+                    setListInfo.setCount.append(4)
 
-            # セット名のハッシュ値を取得
-            for reliclist in allCharaData["relicList"]:
-                if num == reliclist["_flat"]["setID"]:
-                    setListInfo.setNameHash = reliclist["_flat"]["setName"]
-                    break
+                # セット名のハッシュ値を取得
+                for reliclist in allCharaData["relicList"]:
+                    if num == reliclist["_flat"]["setID"]:
+                        setListInfo.setNameHash = reliclist["_flat"]["setName"]
+                        break
 
-            for setEffectCount in setListInfo.setCount:
-                for type in HSR_meta["relic"]["setSkill"][str(num)][str(setEffectCount)]["props"].keys():
-                    statusdata = status(
-                        type=type,
-                        value=HSR_meta["relic"]["setSkill"][str(
-                            num)][str(setEffectCount)]["props"][type]
-                    )
-                addStatus(statusInfos, statusdata.type, statusdata.value)
-                setListInfo.setEffectlist.append(statusdata)
-            relicSetList.append(setListInfo)
+                for setEffectCount in setListInfo.setCount:
+                    try:
+                        for type in HSR_meta["relic"]["setSkill"][str(num)][str(setEffectCount)]["props"].keys():
+                            statusdata = status(
+                                type=type,
+                                value=HSR_meta["relic"]["setSkill"][str(
+                                    num)][str(setEffectCount)]["props"][type]
+                            )
+                        addStatus(statusInfos, statusdata.type,
+                                  statusdata.value)
+                        setListInfo.setEffectlist.append(statusdata)
+                    except:
+                        pass
+                relicSetList.append(setListInfo)
+    except:
+        relicSetList = []
 
-    print("charaInfoData", charaInfoData, "\n\nweaponInfo", weaponInfo,
-          "\n\nrelicList", relicList, "\n\nskillList", skillList, "\n\nrelicSetList", relicSetList, "\n\nstatusInfos", statusInfos)
+    # print(charaInfoData, statusInfos)
+    statusCalculation(charaInfoData, statusInfos)
+    # print(charaInfoData.rank, skillAddedfromRankList, skillList)
+
+    return charaInfoData, weaponInfo, relicList, skillList, relicSetList
+
+    # print("charaInfoData", charaInfoData, "\n\nweaponInfo", weaponInfo,
+    #       "\n\nrelicList", relicList, "\n\nskillList", skillList, "\n\nrelicSetList", relicSetList, "\n\nstatusInfos", statusInfos)
 
 
-def addStatus(statusInfos: statusInfo, type: str, value: float):
-    print(type, value)
+def addStatus(statusInfos, type: str, value: float):
     if type == "HPDelta" or type == "BaseHP":
         statusInfos.HP += value
     elif type == "HPAddedRatio":
@@ -322,3 +315,30 @@ def addStatus(statusInfos: statusInfo, type: str, value: float):
         statusInfos.SPRatio += value
     else:
         pass
+
+
+def statusCalculation(charaInfos: charaInfo, statusInfos: statusInfo):
+    charaInfos.HP *= (1+statusInfos.HP_per)
+    charaInfos.HP += statusInfos.HP
+    charaInfos.ATK *= (1+statusInfos.ATK_per)
+    charaInfos.ATK += statusInfos.ATK
+    charaInfos.DEF *= (1+statusInfos.DEF_per)
+    charaInfos.DEF += statusInfos.DEF
+    charaInfos.speed += statusInfos.speed
+    charaInfos.critical_per += statusInfos.critical_per
+    charaInfos.critical_per *= 100
+    charaInfos.criticak_Dmg += statusInfos.criticak_Dmg
+    charaInfos.criticak_Dmg *= 100
+    charaInfos.statusProbability += statusInfos.statusProbability
+    charaInfos.statusProbability *= 100
+    charaInfos.statusResistanc += statusInfos.statusResistanc
+    charaInfos.statusResistanc *= 100
+    charaInfos.elementAddedRatio.element = statusInfos.elementAddedRatio.element
+    charaInfos.elementAddedRatio.value += statusInfos.elementAddedRatio.value
+    charaInfos.elementAddedRatio.value *= 100
+    charaInfos.breakDamageAddedRatio += statusInfos.breakDamageAddedRatio
+    charaInfos.breakDamageAddedRatio *= 100
+    charaInfos.SPRatio += statusInfos.SPRatio
+    charaInfos.SPRatio *= 100
+
+    return charaInfos
