@@ -149,7 +149,7 @@ def formatCharaData(allCharaData):
         for relicData in allCharaData["relicList"]:
             relicInfo = relic(
                 nameID=relicData["tid"],
-                level=relicData["level"],
+                level=0,
                 type="",
                 rarity=str(HSR_relics[str(relicData["tid"])]
                            ["Rarity"]),  # 整数を文字列に変換
@@ -163,6 +163,10 @@ def formatCharaData(allCharaData):
                                      ]["Icon"],  # imagePathを追加
                 setID=HSR_relics[str(relicData["tid"])]["SetID"]  # setIDを追加
             )
+            try:
+                relicInfo.level = relicData["level"]
+            except:
+                pass
             relicInfo.type = HSR_relics[str(relicData["tid"])]["Type"]
             relicInfo.mainStatus.type = relicData["_flat"]["props"][0]["type"]
             relicInfo.mainStatus.value = relicData["_flat"]["props"][0]["value"]
@@ -184,15 +188,17 @@ def formatCharaData(allCharaData):
     except:
         relicList = []
 
+    rank = charaInfoData.rank
     skillAddedfromRankList = []
     # 凸数に応じたスキルレベル補正
-    for rankID in HSR_chara[str(charaInfoData.nameID)]["RankIDList"]:
+    for i, rankID in enumerate(HSR_chara[str(charaInfoData.nameID)]["RankIDList"]):
         rankImagePath = HSR_ranks[str(rankID)]["IconPath"]
-        for skillAddedLevel in HSR_ranks[str(rankID)]["SkillAddLevelList"].keys():
-            skillAddedLevelfor = skillAddedLevel[:-
-                                                 1] + "0" + skillAddedLevel[-1]
-            skillAddedfromRankList.append(
-                {skillAddedLevelfor: HSR_ranks[str(rankID)]["SkillAddLevelList"][skillAddedLevel]})
+        if i+1 < rank:
+            for skillAddedLevel in HSR_ranks[str(rankID)]["SkillAddLevelList"].keys():
+                skillAddedLevelfor = skillAddedLevel[:-
+                                                     1] + "0" + skillAddedLevel[-1]
+                skillAddedfromRankList.append(
+                    {skillAddedLevelfor: HSR_ranks[str(rankID)]["SkillAddLevelList"][skillAddedLevel]})
         charaInfoData.rankImagePathList.append(rankImagePath)
 
     # スキル情報の取得
@@ -205,6 +211,7 @@ def formatCharaData(allCharaData):
                 addedStatusList=[],
                 imagePath=""
             )
+
             if skillAddedfromRankList is not None:
                 for i, skillAddedLevel in enumerate(skillAddedfromRankList):
                     for skillID in skillAddedLevel.keys():

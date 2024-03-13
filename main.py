@@ -290,9 +290,19 @@ class SelectHSRCharacter(ui.View):
                 res["detailInfo"]["avatarDetailList"][int(selectCharacterID)])
             HSRImageGen.HSR_generate(
                 "ja", charaInfoData, weaponInfo, relicList, skillList, relicSetList)
-            time.sleep(0.5)
+
+            if charaInfoData.rank == 0:
+                rankMessage = "無凸"
+            elif charaInfoData.rank == 6:
+                rankMessage = "完凸"
+            else:
+                rankMessage = str(charaInfoData.rank) + "凸"
+            message = res["detailInfo"]["nickname"]+":" + res["uid"] + \
+                "("+interaction.user.display_name + ")の" + HSR.getNamefromHash("ja",
+                                                                               str(charaInfoData.nameHash)) + " " + rankMessage
+            time.sleep(0.7)
             await interaction.message.delete()
-            await interaction.followup.send(content="", file=discord.File(fp="HSRImageGen/output.png"))
+            await interaction.followup.send(content=message, file=discord.File(fp="HSRImageGen/output.png"))
 
 
 class SelectCharacter(ui.View):
@@ -423,7 +433,7 @@ async def buid_hsr(interaction: discord.Interaction):
         pass
 
     defaultUser = interaction.user.id
-    default_HSR_UID = None
+    default_HSR_UID = 0
     for x in User_UID_Data_HSR:
 
         if x[0] == interaction.user.id:
