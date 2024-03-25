@@ -86,6 +86,7 @@ def formatCharaData(allCharaData):
         DEF=0,
         DEF_per=0,
         speed=0,
+        speed_per=0,
         critical_per=0,
         criticak_Dmg=0,
         breakDamageAddedRatio=0,
@@ -272,9 +273,10 @@ def formatCharaData(allCharaData):
                                 value=HSR_meta["relic"]["setSkill"][str(
                                     num)][str(setEffectCount)]["props"][type]
                             )
-                        addStatus(statusInfos, statusdata.type,
-                                  statusdata.value)
-                        setListInfo.setEffectlist.append(statusdata)
+                            if statusdata.type:
+                                addStatus(statusInfos, statusdata.type,
+                                          statusdata.value)
+                                setListInfo.setEffectlist.append(statusdata)
                     except:
                         pass
                 relicSetList.append(setListInfo)
@@ -306,6 +308,8 @@ def addStatus(statusInfos, type: str, value: float):
         statusInfos.DEF_per += value
     elif type == "SpeedDelta":
         statusInfos.speed += value
+    elif type == "SpeedAddedRatio":
+        statusInfos.speed_per += value
     elif type == "CriticalChanceBase" or type == "CriticalChance":
         statusInfos.critical_per += value
     elif type == "CriticalDamageBase" or type == "CriticalDamage":
@@ -321,7 +325,7 @@ def addStatus(statusInfos, type: str, value: float):
     elif type == "SPRatio" or type == "SPRatioBase":
         statusInfos.SPRatio += value
     else:
-        pass
+        print(type, "typeが不正です")
 
 
 def statusCalculation(charaInfos: charaInfo, statusInfos: statusInfo):
@@ -331,6 +335,7 @@ def statusCalculation(charaInfos: charaInfo, statusInfos: statusInfo):
     charaInfos.ATK += statusInfos.ATK
     charaInfos.DEF *= (1+statusInfos.DEF_per)
     charaInfos.DEF += statusInfos.DEF
+    charaInfos.speed *= (1+statusInfos.speed_per)
     charaInfos.speed += statusInfos.speed
     charaInfos.critical_per += statusInfos.critical_per
     charaInfos.critical_per *= 100

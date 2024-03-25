@@ -63,6 +63,7 @@ class statusInfo(BaseModel):
     DEF: float
     DEF_per: float
     speed: float
+    speed_per: float
     critical_per: float
     criticak_Dmg: float
     breakDamageAddedRatio: float

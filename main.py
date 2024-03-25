@@ -777,14 +777,15 @@ async def on_message(message):
     if message.content.startswith("/"):
         return
 
-    # botの発言は無視
-    if message.author.bot:
-        return
+    # # botの発言は無視
+    # if message.author.bot:
+    #     return
 
     # 読み上げ
 
     if message.channel.id in connected_channel.values() and message.guild.voice_client is not None:
         read_msg = message.content
+        # await send_console(read_msg)
 
         # 話者の設定の読み込み
         with open("./VC/user_speaker.json", "r", encoding="UTF-8")as f:
@@ -793,6 +794,18 @@ async def on_message(message):
             speaker_id = int(speaker[str(message.author.id)])
         except:
             speaker_id = 8
+
+        read_msg = read_msg.replace("_", "")  # アンダーバー削除
+        # 辞書置換
+        if os.path.isfile(f"VC/{message.guild.id}.json"):
+            with open(f"./VC/{message.guild.id}.json", "r", encoding="UTF-8")as f:
+                word = json.load(f)
+            read_list = []  # あとでまとめて変換するときの読み仮名リスト
+            # one_dicは単語と読みのタプル。添字はそれぞれ0と1。
+            for i, one_dic in enumerate(word.items()):
+                read_msg = read_msg.replace(one_dic[0], '{'+str(i)+'}')
+                read_list.append(one_dic[1])  # 変換が発生した順に読みがなリストに追加
+            read_msg = read_msg.format(*read_list)  # 読み仮名リストを引数にとる
 
         # URL置換
         read_msg = re.sub(r"https?://.*?\s|https?://.*?$", "URL", read_msg)
@@ -817,17 +830,6 @@ async def on_message(message):
 
         # _hoge_置換
         read_msg = re.sub(r"_(.*?)_", r"\1", read_msg)
-
-        # 辞書置換
-        if os.path.isfile(f"./VC/{message.guild.id}.json"):
-            with open(f"./VC/{message.guild.id}.json", "r", encoding="UTF-8")as f:
-                word = json.load(f)
-            read_list = []  # あとでまとめて変換するときの読み仮名リスト
-            # one_dicは単語と読みのタプル。添字はそれぞれ0と1。
-            for i, one_dic in enumerate(word.items()):
-                read_msg = read_msg.replace(one_dic[0], '{'+str(i)+'}')
-                read_list.append(one_dic[1])  # 変換が発生した順に読みがなリストに追加
-            read_msg = read_msg.format(*read_list)  # 読み仮名リストを引数にとる
 
         try:
             await send_console("**"+message.guild.name+"**"+message.author.name+":"+read_msg)
