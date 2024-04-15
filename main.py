@@ -79,6 +79,8 @@ modeFlag = 0
 
 @client.event
 async def on_ready():
+    count = len(client.guilds)
+    await client.change_presence(activity=discord.Game(str(count)+"サーバー", type=1))
     update_task()
     await send_console("起動しました")
     files = glob.glob(f"/home/sumaa/genshin-Artifacter/VC/*.wav")
@@ -123,6 +125,7 @@ class inputHSRUID(ui.Modal):
         self.add_item(self.uid)
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
+        showCharaInfoList = []
         global default_HSR_UID, defaultUser
         if interaction.user.id == defaultUser or interaction.user.id == int(adminID):
 
@@ -1009,6 +1012,8 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/help", value="全コマンドの詳細を表示します。\n", inline=False)
     embed.add_field(
         name="/build", value="原神のuidを入力することでプロフィールに設定しているキャラ1体の詳細をビルドカードにして表示します。\n**※ただし原神のプロフィールでキャラの詳細を表示を許可しないとできません**\n", inline=False)
+    embed.add_field(
+        name="/buildhsr", value="崩壊スターレイルのuidを入力することでプロフィールに設定しているキャラ1体の詳細をビルドカードにして表示します。\n", inline=False)
     embed.add_field(name="/selectfavoritecharacter",
                     value="ビルドカード生成時にキャラクターにオリジナルの画像を使用できるように登録します。登録には画像の**URL**が必要です。\n", inline=False)
     embed.add_field(name="/deletefavoritecharacter",
@@ -1072,6 +1077,20 @@ async def palstart(interaction: discord.Interaction):
 async def palstop(interaction: discord.Interaction):
     await interaction.response.defer()
     os.system("sudo systemctl stop PalServer")
+    await interaction.followup.send("停止完了")
+
+
+@tree.command(name="minecraftstart", description="マイクラサーバーを起動します")
+async def palstart(interaction: discord.Interaction):
+    await interaction.response.defer()
+    os.system("sudo systemctl start minecraftserver")
+    await interaction.followup.send("起動完了 sssumaa.com:25565")
+
+
+@tree.command(name="minecraftstop", description="マイクラサーバーを停止します")
+async def palstop(interaction: discord.Interaction):
+    await interaction.response.defer()
+    os.system("sudo systemctl stop minecraftserver")
     await interaction.followup.send("停止完了")
 
 # @tree.command(name="vote", description="投票を行います")
