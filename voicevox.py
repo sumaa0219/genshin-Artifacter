@@ -24,7 +24,7 @@ def text_2_wav(text, speaker_id, max_retry=20):
                 response = requests.post("http://192.168.0.200:50021/synthesis",
                                          params=synth_payload,
                                          data=json.dumps(query_data),
-                                         timeout=40)
+                                         timeout=20)
                 if response.status_code == 200:
                     return response.content
             else:
