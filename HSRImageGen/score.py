@@ -15,7 +15,7 @@ def calculationScore(charaID: int, relicInfo: relic):
                       relicInfo.mainStatus.type, relicInfo.mainStatus.value)
     # サブステータスのスコア計算
     for sub in relicInfo.subAffix:
-        score += addScore(charaID, "sub", relicInfo.level,
+        score += addScore(charaID, "weight", relicInfo.level,
                           relicInfo.type, sub.type, sub.value)
 
     return score
@@ -34,7 +34,7 @@ def addScore(charaID: int, MainOrSub: str, level: int, place: str, type: str, va
     if MainOrSub == "main":
         weight = HSR_weight[str(charaID)][MainOrSub][place][type]
         return (level + 1) / 16 * weight * 50
-    elif MainOrSub == "sub":
+    elif MainOrSub == "weight":
         if type == "CriticalChance" or type == "CriticalDamage" or type == "StatusProbability" or type == "StatusResistance" or type == "BreakDamageAddedRatio":
             type += "Base"
         weight = HSR_weight[str(charaID)][MainOrSub][type]

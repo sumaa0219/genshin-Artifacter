@@ -168,7 +168,7 @@ def formatCharaData(allCharaData):
                 relicInfo.level = relicData["level"]
             except:
                 pass
-            relicInfo.type = HSR_relics[str(relicData["tid"])]["Type"]
+            relicInfo.type = str(relicData["type"])
             relicInfo.mainStatus.type = relicData["_flat"]["props"][0]["type"]
             relicInfo.mainStatus.value = relicData["_flat"]["props"][0]["value"]
 
