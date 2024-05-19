@@ -24,6 +24,7 @@ import argparse
 import HSRImageGen.HSR as HSR
 import HSRImageGen.format as HSRformat
 import HSRImageGen.imageGen as HSRImageGen
+import update
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--debug", action="store_true", help="Use the debug token")
@@ -58,6 +59,7 @@ with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_fil
 with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
     nameItem = json.load(json_file)
 
+update.update()
 
 # mac用
 # discord.opus.load_opus("libopus.dylib")
@@ -1014,6 +1016,8 @@ async def help(interaction: discord.Interaction):
         name="/build", value="原神のuidを入力することでプロフィールに設定しているキャラ1体の詳細をビルドカードにして表示します。\n**※ただし原神のプロフィールでキャラの詳細を表示を許可しないとできません**\n", inline=False)
     embed.add_field(
         name="/buildhsr", value="崩壊スターレイルのuidを入力することでプロフィールに設定しているキャラ1体の詳細をビルドカードにして表示します。\n", inline=False)
+    embed.add_field(name="/restart",
+                    value="botを再起動します\n困ったときまこれをやってね", inline=False)
     embed.add_field(name="/selectfavoritecharacter",
                     value="ビルドカード生成時にキャラクターにオリジナルの画像を使用できるように登録します。登録には画像の**URL**が必要です。\n", inline=False)
     embed.add_field(name="/deletefavoritecharacter",
@@ -1092,6 +1096,13 @@ async def palstop(interaction: discord.Interaction):
     await interaction.response.defer()
     os.system("sudo systemctl stop minecraftserver")
     await interaction.followup.send("停止完了")
+
+
+@tree.command(name="restart", description="botを再起動します")
+async def restart(interaction: discord.Interaction):
+    await interaction.response.send_message("再起動完了")
+    os.system("sudo systemctl restart genshin-artifacter")
+
 
 # @tree.command(name="vote", description="投票を行います")
 # async def vote(interaction: discord.Interaction, title: str, options: str):

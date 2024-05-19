@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import time
 import discord
+import update
 
 baseURL = "https://enka.network/ui/"
 
@@ -274,6 +275,8 @@ def getCharacterStatusfromselect(DataBase, showAvatarData, ScoreState, authorInf
     # WeaponStatus
     # WeaponName
     WeaponNameID = Weapon["flat"]["nameTextMapHash"]
+    itemPath = Weapon["flat"]["icon"]
+    update.checkUpdateGenshin_weapon(WeaponNameID, itemPath)
     WeaponName = nameItem["ja"][str(WeaponNameID)]
 
     # WeponBaseData
@@ -343,6 +346,10 @@ def getCharacterStatusfromselect(DataBase, showAvatarData, ScoreState, authorInf
         # ArtifactType
         setNameID = x["flat"]["setNameTextMapHash"]
         ArtifactType = nameItem["ja"][str(setNameID)]
+        update.checkUpdateGenshin_relic(
+            TypeArtifactID, x["flat"]["icon"], setNameID)
+        print(TypeArtifactID, x["flat"]["icon"], setNameID)
+        print("--------------------check--------------------")
         # ArtifactLevel
         level = x["reliquary"]["level"]
         ArtifactLevel = level - 1

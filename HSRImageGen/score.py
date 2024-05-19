@@ -4,7 +4,7 @@ from HSRImageGen.imageGen import relic
 with open('assetData/HSR_max.json', 'r', encoding="utf-8") as json_file:
     HSR_max = json.load(json_file)
 
-with open('assetData/HSR_weight.json', 'r', encoding="utf-8") as json_file:
+with open('StarRailScore/score.json', 'r', encoding="utf-8") as json_file:
     HSR_weight = json.load(json_file)
 
 
