@@ -155,6 +155,7 @@ class inputHSRUID(ui.Modal):
                 pd.DataFrame(User_UID_Data_HSR).to_csv(
                     "./assetData/user_UID_data_hsr.csv", index=False, header=False)
 
+            default_HSR_UID = int(self.uid.value)
             # プレイヤーデータの取得
             try:
                 playerInfo, showCharaInfoList = HSR.getInfo(
@@ -228,6 +229,7 @@ class InputUID(ui.Modal):
                 pd.DataFrame(User_UID_Data).to_csv(
                     "./assetData/user_UID_data.csv", index=False, header=False)
 
+            defaultUID = int(self.uid.value)
             global DataBase, showAvatarlist, PlayerInfo
             try:
                 DataBase, showAvatarlist, PlayerInfo, = arttifacter.getData(
