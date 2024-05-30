@@ -104,4 +104,5 @@ def checkUpdateGenshin_relic(equipType, icon, nameTextMapHash):
 
 def update():
     updateAPI()
+    updateGenshin_Character()
     updateWeightHSR()
