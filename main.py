@@ -25,7 +25,9 @@ import HSRImageGen.HSR as HSR
 import HSRImageGen.format as HSRformat
 import HSRImageGen.imageGen as HSRImageGen
 import update
+import locale
 
+locale.setlocale(locale.LC_TIME, 'ja_JP.UTF-8')
 parser = argparse.ArgumentParser()
 parser.add_argument("--debug", action="store_true", help="Use the debug token")
 args = parser.parse_args()
@@ -77,6 +79,8 @@ flag = 0
 defaultUID = None
 default_HSR_UID = None
 modeFlag = 0
+weekday = ["月", "火", "水", "木", "金"]
+weekendday = ["土", "日"]
 
 
 @client.event
@@ -96,20 +100,31 @@ async def on_ready():
 
     @tasks.loop(seconds=interval_seconds)
     async def task_message():
+        update_task()
         task_keys_list = list(taskList.keys())
+        taskExcute = False
         for key in task_keys_list:
             guild_id = 0
             channel_id = 0
             message = ""
             if taskList[key]["status"] == "active":
                 dt_now = datetime.datetime.now()
-                if dt_now.strftime('%H%M') == str(taskList[key]["time"]["h"])+str(taskList[key]["time"]["m"]):
-                    guild_id = taskList[key]["serverID"]
-                    channel_id = taskList[key]["chanelID"]
-                    message = taskList[key]["message"]
-                    guild = client.get_guild(guild_id)
-                    channel = guild.get_channel(channel_id)
-                    await channel.send(message)
+                if dt_now.strftime('%a') == str(taskList[key]["day"]):
+                    taskExcute = True
+                elif str(taskList[key]["day"]) == "なし":
+                    taskExcute = True
+                elif str(taskList[key]["day"]) == "平日" and dt_now.strftime('%a') in weekday:
+                    taskExcute = True
+                elif str(taskList[key]["day"]) == "休日" and dt_now.strftime('%a') in weekendday:
+                    taskExcute = True
+                if taskExcute == True:
+                    if dt_now.strftime('%H%M') == str(taskList[key]["time"]["h"])+str(taskList[key]["time"]["m"]):
+                        guild_id = taskList[key]["serverID"]
+                        channel_id = taskList[key]["chanelID"]
+                        message = taskList[key]["message"]
+                        guild = client.get_guild(guild_id)
+                        channel = guild.get_channel(channel_id)
+                        await channel.send(message)
 
     # タスクを開始
     task_message.start()
@@ -935,8 +950,8 @@ async def on_voice_state_update(member, before, after):
             pass
 
 
-@tree.command(name="addtask", description="指定時間に毎日送信するメッセージ追加できます。メッセージはこのコマンドが使われたところに送信されます")
-async def addTask(interaction: discord.Interaction, taskname: str, hour: str, minutes: str, message: str):
+@tree.command(name="addtask", description="指定時間に毎日送信するメッセージ追加できます。メッセージはこのコマンドが使われたところに送信されます。")
+async def addTask(interaction: discord.Interaction, taskname: str, hour: str, minutes: str, day: str, message: str):
     global taskList
     newtask = {
         taskname: {
@@ -945,6 +960,7 @@ async def addTask(interaction: discord.Interaction, taskname: str, hour: str, mi
                 "h": hour,
                 "m": minutes
             },
+            "day": day,
             "serverID": interaction.guild.id,
             "chanelID": interaction.channel.id,
             "DMID": "",
@@ -1037,7 +1053,7 @@ async def help(interaction: discord.Interaction):
     embed.add_field(
         name="/list", value="辞書に登録されている単語を表示します。辞書はそのサーバーで登録されたものを表示します\n", inline=False)
     embed.add_field(
-        name="/addtask", value="指定時間に毎日送信するメッセージ追加できます。メッセージはこのコマンドが使われたところに送信されます。時間は24時間表記です。\n", inline=False)
+        name="/addtask", value="指定時間に毎日送信するメッセージ追加できます。メッセージはこのコマンドが使われたところに送信されます。時間は24時間表記です。\n曜日指定(dayオプション)は'なし'、'平日','休日','月〜日'のいずれかで指定してください。\n", inline=False)
     embed.add_field(name="/switchtask",
                     value="指定されたタスクのアクティブ状態を切り替えます\n", inline=False)
     embed.add_field(name="/deletetask", value="指定されたタスクを削除します\n", inline=False)
