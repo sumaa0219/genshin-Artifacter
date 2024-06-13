@@ -84,8 +84,9 @@ def getData(UID):
     PlayerInfo.append(AvatarNameURL)
     showAvatarlist = showAvatarlistID
 
+    # print(PlayerINFO)
+    # print("\n\n")
     # print(showAvatarlist)
-    # print(AvatarINFOlist)
 
     return DataBase, showAvatarlist, PlayerInfo
 

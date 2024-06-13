@@ -106,3 +106,4 @@ def update():
     updateAPI()
     updateGenshin_Character()
     updateWeightHSR()
+    print("update complete!\n")
