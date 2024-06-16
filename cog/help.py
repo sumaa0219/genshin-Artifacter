@@ -29,8 +29,8 @@ class HelpCog(commands.Cog):
 
         embed.add_field(name="/help", value="全コマンドの詳細を表示します。\n", inline=False)
         for i, help_command in enumerate(help_command_list):
-            embed.add_field(name=f"*{command_type_list[i]}*",
-                            value=f"-------------------------------\n", inline=False)
+            # embed.add_field(name=f"*{command_type_list[i]}*",
+            #                 value=f"-------------------------------\n", inline=False)
             commandList = eval(help_command + "()")
             for command in commandList:
                 embed.add_field(name=command[0],
