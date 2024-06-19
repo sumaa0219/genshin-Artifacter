@@ -17,7 +17,6 @@ class TaskCog(commands.Cog):
     def __init__(self, bot):  # コンストラクタ
         self.bot = bot
         update_task()
-        self.task_message.start()
 
     @tasks.loop(seconds=interval_seconds)  # タスクを定期的に実行する
     async def task_message(self):
@@ -50,6 +49,7 @@ class TaskCog(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print("Cog task.py ready!")
+        self.task_message.start()
 
     @app_commands.command(name="addtask", description="指定時間に毎日送信するメッセージ追加できます。メッセージはこのコマンドが使われたところに送信されます。")
     async def addTask(self, interaction: discord.Interaction, taskname: str, hour: str, minutes: str, day: str, message: str):

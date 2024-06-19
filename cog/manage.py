@@ -112,6 +112,7 @@ async def send_console(message):
 
 
 async def send(guild_id, channel_id, message):
+    print("send function")
     global bott
     guild = bott.get_guild(int(guild_id))
     channel = guild.get_channel(int(channel_id))

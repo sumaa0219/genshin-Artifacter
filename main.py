@@ -43,8 +43,8 @@ else:
     print("------------------product mode------------------")
 print("---------------------------\n|  genshinArtifacter bot  | -> starting...\n---------------------------")
 
-
-INITIAL_EXTENSIONS = [
+init_manage(adminServer, adminChannel)
+GLOBAL_INITIAL_EXTENSIONS = [
     "cog.genshin",
     "cog.manage",
     "cog.starrail",
@@ -54,18 +54,30 @@ INITIAL_EXTENSIONS = [
 
 ]
 
+catCaffeCommands = [["cog.catcafe"], [836846944517226526]]
+
+
+async def load_extentions_Select_Guild(cogName: str, guildID: int):
+    print("loading selected cogs...")
+    await bot.load_extension(cogName)
+    await bot.tree.sync(guild=discord.Object(id=guildID))
+
 
 async def load_extentions():
     print("loading cogs...")
-    for cog in INITIAL_EXTENSIONS:
+    for cog in GLOBAL_INITIAL_EXTENSIONS:
         await bot.load_extension(cog)
-    init_manage(adminServer, adminChannel)
     await bot.tree.sync()
 
 
 @bot.event
 async def setup_hook():
     await load_extentions()
+    try:
+        await load_extentions_Select_Guild(catCaffeCommands[0][0], catCaffeCommands[1][0])
+        await load_extentions_Select_Guild("cog.tyomnsr", 929432903534923857)
+    except Exception as e:
+        print(e)
 
 
 @bot.event
