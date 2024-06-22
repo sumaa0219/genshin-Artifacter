@@ -83,6 +83,18 @@ class ManageCog(commands.Cog):
         await interaction.response.send_message("再起動完了")
         os.system("sudo systemctl restart genshin-artifacter")
 
+    # @app_commands.command(name="load", description="指定されたcogをロードします")
+    # @app_commands.check(is_admin)
+    # async def loadExtention(self, interaction: discord.Interaction, cogName: str, guildID: int):
+    #     print("loading selected cogs...")
+    #     if guildID is None:
+    #         await self.bot.load_extension(cogName)
+    #         await self.bot.tree.sync()
+    #     else:
+    #         await self.bot.load_extension(cogName)
+    #         await self.bot.tree.sync(guild=discord.Object(id=guildID))
+    #     await interaction.response.send_message("ロード完了")
+
 
 def init_manage(adminServer, adminChannel):
     global GadminServer, GadminChannel

@@ -63,7 +63,7 @@ def getInfo(UID: int):
     resJson = getDataFromUID(UID)
 
     # playerInfoにデータを格納
-    playerInfo.uid = resJson["uid"]
+    playerInfo.uid = int(resJson["uid"])
     playerInfo.name = resJson["detailInfo"]["nickname"]
     playerInfo.level = resJson["detailInfo"]["level"]
     playerInfo.headIcon = resJson["detailInfo"]["headIcon"]

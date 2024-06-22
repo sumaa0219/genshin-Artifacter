@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from io import BytesIO
 import requests
 import json
+import re
 
 with open('API-docs/store/hsr/hsr.json', 'r', encoding="utf-8") as json_file:
     HSR = json.load(json_file)
@@ -313,7 +314,7 @@ def HSR_generate(language: str, charaInfoData: charaInfo, weaponInfo: weapon, re
     drawText(base, scoreRank, 40, 1220, 865, hex_to_rgb("#e4c992"))
     # セット効果の表示
     for i, set in enumerate(relicSetList):
-        drawText(base, HSR[language][str(set.setNameHash)],
+        drawText(base, re.sub(r'\{.*?\}', '', HSR[language][str(set.setNameHash)]),
                  20, 600, 830+(i*70), hex_to_rgb("#e4c992"))
         count = str(set.setCount[len(set.setCount)-1])
         drawText(base, count + " セット",

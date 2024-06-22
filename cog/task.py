@@ -46,6 +46,7 @@ class TaskCog(commands.Cog):
                         await send(guild_id, channel_id, message)
 
     # イベントリスナー(ボットが起動したときやメッセージを受信したとき等)
+
     @commands.Cog.listener()
     async def on_ready(self):
         print("Cog task.py ready!")

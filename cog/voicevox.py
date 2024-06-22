@@ -153,6 +153,9 @@ class VoicevoxCog(commands.Cog):
             read_msg = re.sub(r"<:(.*?):[0-9]+>", r"\1", read_msg)
             read_msg = re.sub(r"\*(.*?)\*", r"\1", read_msg)
             read_msg = re.sub(r"_(.*?)_", r"\1", read_msg)
+            read_msg = re.sub(r'w{3,}', 'わらわら', read_msg)
+            read_msg = re.sub(r'W{3,}', 'わらわら', read_msg)
+            read_msg = re.sub(r'ｗ{3,}', 'わらわら', read_msg)
 
             try:
                 print(

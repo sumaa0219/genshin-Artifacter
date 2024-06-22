@@ -62,7 +62,9 @@ class TyomnsrCog(commands.Cog):
                     jsonDB.update_db(userDataFile, userID, data)
                     levelUpFlag = checkLevelUp(userID, int(level))
                     if levelUpFlag == True:
-                        await message.channel.send(f"{message.author.mention} がLv.{level + 1}にレベルアップした！")
+                        announceChannnel = self.bot.get_guild(
+                            serverID).get_channel(announcementChannelID)
+                        await announceChannnel.send(f"{message.author.mention} がLv.{level + 1}にレベルアップした！")
                 except:
                     # message.channel.send(f"{message.author.display_name} はまだ登録されていません。")
                     pass
