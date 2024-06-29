@@ -9,18 +9,18 @@ import HSRImageGen.imageGen as HSRImageGen
 import os
 from dotenv import load_dotenv
 
-
 load_dotenv()
 adminID = os.environ['adminID']
 baseHsrUrl = "https://enka.network/ui/hsr/"
-defaultUser = None
-default_HSR_UID = None
-
 
 # commands.Cogを継承する
+
+
 class StarrailCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.default_user = None
+        self.default_HSR_UID = None
 
     # イベントリスナー(ボットが起動したときやメッセージを受信したとき等)
     @commands.Cog.listener()
@@ -29,7 +29,6 @@ class StarrailCog(commands.Cog):
 
     @app_commands.command(name="buildhsr", description="崩壊スターレイルのUIDから遺物ビルドを生成します")
     async def buid_hsr(self, interaction: discord.Interaction):
-        global defaultUser, default_HSR_UID
         User_UID_Data_HSR = pd.read_csv(
             "./assetData/user_UID_data_hsr.csv", header=None).values.tolist()
         try:
@@ -37,37 +36,31 @@ class StarrailCog(commands.Cog):
         except:
             pass
 
-        defaultUser = interaction.user.id
-        default_HSR_UID = 0
+        self.default_user = interaction.user.id
+        self.default_HSR_UID = 0
         for x in User_UID_Data_HSR:
-
             if x[0] == interaction.user.id:
-                default_HSR_UID = x[1]
+                self.default_HSR_UID = x[1]
+                break
 
-            else:
-                if default_HSR_UID == None:
-                    default_HSR_UID = None
-        # print(defaultUID)
-        modal = inputHSRUID()
+        modal = InputHSRUID(self)
         await interaction.response.send_modal(modal)
 
 
-class inputHSRUID(ui.Modal):
-    def __init__(self):
+class InputHSRUID(ui.Modal):
+    def __init__(self, cog: StarrailCog):
         super().__init__(
             title="崩壊スターレイルのUIDを入力してください",
         )
+        self.cog = cog
         self.uid = discord.ui.TextInput(
             label="UID",
-            default=default_HSR_UID,
+            default=self.cog.default_HSR_UID,
         )
         self.add_item(self.uid)
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        showCharaInfoList = []
-        global default_HSR_UID, defaultUser
-        if interaction.user.id == defaultUser or interaction.user.id == int(adminID):
-
+        if interaction.user.id == self.cog.default_user or interaction.user.id == int(adminID):
             # すでに登録されているUIDを取得もしくは新規登録
             User_UID_Data_HSR = pd.read_csv(
                 "./assetData/user_UID_data_hsr.csv", header=None).values.tolist()
@@ -77,7 +70,7 @@ class inputHSRUID(ui.Modal):
                 if int(x[0]) == interaction.user.id:  # ID同じ場合
                     if int(x[1]) == int(self.uid.value):  # 同じかつUIDが同じ場合
                         pass
-                    elif int(x[1]) is not int(self.uid.value):  # UIDだけ違う場合
+                    elif int(x[1]) != int(self.uid.value):  # UIDだけ違う場合
                         User_UID_Data_HSR[i][1] = str(self.uid.value)
                         pd.DataFrame(User_UID_Data_HSR).to_csv(
                             "./assetData/user_UID_data_hsr.csv", index=False, header=False)
@@ -92,7 +85,7 @@ class inputHSRUID(ui.Modal):
                 pd.DataFrame(User_UID_Data_HSR).to_csv(
                     "./assetData/user_UID_data_hsr.csv", index=False, header=False)
 
-            default_HSR_UID = int(self.uid.value)
+            self.cog.default_HSR_UID = int(self.uid.value)
             # プレイヤーデータの取得
             try:
                 playerInfo, showCharaInfoList = HSR.getInfo(
@@ -109,7 +102,7 @@ class inputHSRUID(ui.Modal):
             embed.add_field(name="開拓者レベル", value=playerInfo.level)
             embed.add_field(name="均衡レベル", value=playerInfo.worldLevel)
             embed.add_field(name="フレンド数", value=playerInfo.friendCount)
-            view = SelectHSRCharacter()
+            view = SelectHSRCharacter(self.cog, showCharaInfoList)
             embed.set_footer(text="UID: " + str(self.uid.value))
             print("UID:"+str(self.uid.value))
 
@@ -125,22 +118,22 @@ class inputHSRUID(ui.Modal):
 
 
 class SelectHSRCharacter(ui.View):
+    def __init__(self, cog: StarrailCog, showCharaInfoList):
+        super().__init__()
+        self.cog = cog
+        self.showCharaInfoList = showCharaInfoList
+
     @discord.ui.select(
         cls=ui.Select,
         placeholder="キャラクターを選択",
-
-
     )
     async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
-        global default_HSR_UID, defaultUser
-        if interaction.user.id == int(defaultUser) or interaction.user.id == adminID:
-
-            global selectCharacterID
-            selectCharacterID = select.values[0]
+        if interaction.user.id == self.cog.default_user or interaction.user.id == int(adminID):
+            selectCharacterID = int(select.values[0])
             await interaction.response.defer(thinking=True)
-            res = HSR.getDataFromUID(default_HSR_UID)
+            res = HSR.getDataFromUID(self.cog.default_HSR_UID)
             charaInfoData, weaponInfo, relicList, skillList, relicSetList = HSRformat.formatCharaData(
-                res["detailInfo"]["avatarDetailList"][int(selectCharacterID)])
+                res["detailInfo"]["avatarDetailList"][selectCharacterID])
             HSRImageGen.HSR_generate(
                 "ja", charaInfoData, weaponInfo, relicList, skillList, relicSetList)
 

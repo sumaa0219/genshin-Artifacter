@@ -89,38 +89,6 @@ class TyomnsrCog(commands.Cog):
         setupUser(member.id, member.display_name)
         await interaction.response.send_message("ユーザーを追加しました。")
 
-    @app_commands.command(name="timeout", description="指定した時間、メンションされたユーザーをタイムアウトします。")
-    @app_commands.guilds(serverID)
-    @commands.has_permissions(administrator=True)
-    async def timeout(self, interaction: discord.Interaction, member: discord.Member, time: str):
-        timeUnit = time[-1]
-        timeoutDuration = time[:-1]
-        channnel = self.bot.get_guild(
-            serverID).get_channel(moderaterOnlyChannelID)
-        if not timeoutDuration.isdigit():
-            await interaction.response.send_message("時間は数値で指定してください。")
-            return
-
-        timeoutDuration = int(timeoutDuration)
-        if timeUnit == "秒":
-            await member.timeout(datetime.timedelta(seconds=timeoutDuration))
-            unit = "秒"
-        elif timeUnit == "分":
-            await member.timeout(datetime.timedelta(minutes=timeoutDuration))
-            unit = "分"
-        elif timeUnit == "時日":
-            await member.timeout(datetime.timedelta(hours=timeoutDuration))
-            unit = "時"
-        elif timeUnit == "日":
-            await member.timeout(datetime.timedelta(days=timeoutDuration))
-            unit = "日"
-        else:
-            await interaction.response.send_message("時間の単位が不正です。秒、分、時、日のいずれかを使用してください。")
-            return
-
-        await channnel.send(f"{interaction.user.display_name}が{member.display_name} を{timeoutDuration}{unit}間タイムアウトしました。")
-        await interaction.response.send_message("タイムアウトを実行しました。", ephemeral=True)
-
     @app_commands.command(name="ranking", description="累計経験値順にランキングを表示します。")
     @app_commands.guilds(serverID)
     async def ranking(self, interaction: discord.Interaction):

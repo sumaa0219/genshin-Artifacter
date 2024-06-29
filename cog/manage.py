@@ -4,6 +4,7 @@ import discord
 import time
 import os
 from dotenv import load_dotenv
+import datetime
 
 
 load_dotenv()
@@ -21,6 +22,7 @@ class ManageCog(commands.Cog):
         global bott
         self.bot = bot
         bott = bot
+        self.AdminID = adminID
     # イベントリスナー(ボットが起動したときやメッセージを受信したとき等)
 
     @commands.Cog.listener()
@@ -82,6 +84,38 @@ class ManageCog(commands.Cog):
     async def restart(self, interaction: discord.Interaction):
         await interaction.response.send_message("再起動完了")
         os.system("sudo systemctl restart genshin-artifacter")
+
+    @app_commands.command(name="timeout", description="指定した時間、メンションされたユーザーをタイムアウトします。")
+    @commands.has_permissions(administrator=True)
+    async def timeout(self, interaction: discord.Interaction, member: discord.Member, time: str):
+        if member.id == self.AdminID:
+            print("bot管理者をタイムアウトすることはできません。")
+            await interaction.response.send_message("bot管理者をタイムアウトすることはできません。")
+            return
+        timeUnit = time[-1]
+        timeoutDuration = time[:-1]
+        if not timeoutDuration.isdigit():
+            await interaction.response.send_message("時間は数値で指定してください。")
+            return
+
+        timeoutDuration = int(timeoutDuration)
+        if timeUnit == "秒":
+            await member.timeout(datetime.timedelta(seconds=timeoutDuration))
+            unit = "秒"
+        elif timeUnit == "分":
+            await member.timeout(datetime.timedelta(minutes=timeoutDuration))
+            unit = "分"
+        elif timeUnit == "時日":
+            await member.timeout(datetime.timedelta(hours=timeoutDuration))
+            unit = "時"
+        elif timeUnit == "日":
+            await member.timeout(datetime.timedelta(days=timeoutDuration))
+            unit = "日"
+        else:
+            await interaction.response.send_message("時間の単位が不正です。秒、分、時、日のいずれかを使用してください。")
+            return
+
+        await interaction.response.send_message("タイムアウトを実行しました。", ephemeral=True)
 
     # @app_commands.command(name="load", description="指定されたcogをロードします")
     # @app_commands.check(is_admin)

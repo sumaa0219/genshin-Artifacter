@@ -15,18 +15,6 @@ import asyncio
 import time
 
 baseURL = "https://enka.network/ui/"
-defaultUID = None
-defaultUser = None
-selectStatus = ""
-user = ""
-photoURL = ""
-showAvatarlist = []
-showAvatarData = None
-selectCharacterID = None
-DataBase = None
-PlayerInfo = None
-Name = None
-modeFlag = 0
 load_dotenv()
 adminID = os.environ['adminID']
 
@@ -42,6 +30,17 @@ with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
 class GenshinCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.defaultUID = None
+        self.defaultUser = None
+        self.modeFlag = 0
+        self.photoURL = ""
+        self.user = ""
+        self.showAvatarlist = []
+        self.showAvatarData = None
+        self.selectCharacterID = None
+        self.DataBase = None
+        self.PlayerInfo = None
+        self.Name = None
 
     # イベントリスナー(ボットが起動したときやメッセージを受信したとき等)
     @commands.Cog.listener()
@@ -58,45 +57,34 @@ class GenshinCog(commands.Cog):
         except:
             pass
 
-        global defaultUID, defaultUser, modeFlag
-        modeFlag = 0
-        defaultUser = interaction.user.id
-        defaultUID = None
+        self.modeFlag = 0
+        self.defaultUser = interaction.user.id
+        self.defaultUID = None
         for x in User_UID_Data:
-
             if x[0] == interaction.user.id:
-                defaultUID = x[1]
+                self.defaultUID = x[1]
+                break
 
-            else:
-                if defaultUID == None:
-                    defaultUID = None
-        # print(defaultUID)
-        modal = InputUID()
+        modal = InputUID(self)
         await interaction.response.send_modal(modal)
 
     @app_commands.command(name="selectfavoritecharacter", description="ビルド生成時にオリジナルの画像を使用できるように登録します")
-    async def select(self, interaction: discord.Interaction, photurl: str):
-        global user, modeFlag, photoURL
-        photoURL = photurl
-        user = interaction.user
-        modeFlag = 1
+    async def select(self, interaction: discord.Interaction, photourl: str):
+        self.photoURL = photourl
+        self.user = interaction.user
+        self.modeFlag = 1
         User_UID_Data = pd.read_csv(
             "./assetData/user_UID_data.csv", header=None).values.tolist()
         print(interaction.user.id)
 
-        global defaultUID, defaultUser
-        defaultUser = interaction.user.id
-        defaultUID = None
+        self.defaultUser = interaction.user.id
+        self.defaultUID = None
         for x in User_UID_Data:
-
             if x[0] == interaction.user.id:
-                defaultUID = x[1]
+                self.defaultUID = x[1]
+                break
 
-            else:
-                if defaultUID == None:
-                    defaultUID = None
-        # print(defaultUID)
-        modal = InputUID()
+        modal = InputUID(self)
         await interaction.response.send_modal(modal)
 
     @app_commands.command(name="deletefavoritecharacter", description="オリジナルの画像を削除します")
@@ -117,45 +105,41 @@ class GenshinCog(commands.Cog):
 
 
 class SelectCharacter(ui.View):
+    def __init__(self, cog):
+        super().__init__()
+        self.cog = cog
+
     @discord.ui.select(
         cls=ui.Select,
         placeholder="キャラクターを選択",
-
-
     )
     async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
-        if interaction.user.id == defaultUser or interaction.user.id == adminID:
-            global modeFlag
-
-            if modeFlag == 0:
-                view = SelectScoreState()
+        if interaction.user.id == self.cog.defaultUser or interaction.user.id == adminID:
+            if self.cog.modeFlag == 0:
+                view = SelectScoreState(self.cog)
                 embed = discord.Embed(
-                    title=PlayerInfo[0], color=discord.Color.blurple())
+                    title=self.cog.PlayerInfo[0], color=discord.Color.blurple())
 
-                global showAvatarlist, showAvatarData
-                ProfileAvatarID = showAvatarlist[int(
-                    select.values[0])]["avatarId"]
-                showAvatarData = showAvatarlist[int(select.values[0])]
+                self.cog.showAvatarData = self.cog.showAvatarlist[int(
+                    select.values[0])]
+                ProfileAvatarID = self.cog.showAvatarData["avatarId"]
 
                 ProfileAvatarname = characters[str(
                     ProfileAvatarID)]["SideIconName"]
                 name = ProfileAvatarname.split("_")
                 AvatarNameURL = baseURL + \
-                    name[0] + "_" + name[1]+"_"+name[3]+".png"
+                    name[0] + "_" + name[1] + "_" + name[3] + ".png"
 
-                global selectCharacterID
-                selectCharacterID = select.values[0]
+                self.cog.selectCharacterID = select.values[0]
                 embed.set_image(url=AvatarNameURL)
                 await interaction.response.edit_message(embeds=[embed], view=view)
 
-            elif modeFlag == 1:
-                global DataBase, photoURL
-                selectCharacterID = select.values[0]
+            elif self.cog.modeFlag == 1:
+                self.cog.selectCharacterID = select.values[0]
 
-                DataBase = DataBase[int(selectCharacterID)]
-                ScoreState = select.values[0]
-                selectCharaID = showAvatarlist[int(
-                    selectCharacterID)]["avatarId"]
+                DataBase = self.cog.DataBase[int(self.cog.selectCharacterID)]
+                selectCharaID = self.cog.showAvatarlist[int(
+                    self.cog.selectCharacterID)]["avatarId"]
                 selectCharaHashID = characters[str(
                     selectCharaID)]["NameTextMapHash"]
                 Name = nameItem["ja"][str(selectCharaHashID)]
@@ -164,23 +148,25 @@ class SelectCharacter(ui.View):
                     "./assetData/user_UID_data.csv", header=None).values.tolist()
 
                 for i, x in enumerate(User_UID_Data):
-                    if x[0] == user.id:
+                    if x[0] == self.cog.user.id:
                         if Name == x[2]:
-                            setOriginalCharacter(photoURL, 1, Name, user.name)
+                            setOriginalCharacter(
+                                self.cog.photoURL, 1, Name, self.cog.user.name)
                         else:
                             setOriginalCharacter(
-                                photoURL, 2, Name, user.name, x[2])
+                                self.cog.photoURL, 2, Name, self.cog.user.name, x[2])
                             User_UID_Data[i][2] = Name
                             pd.DataFrame(User_UID_Data).to_csv(
                                 "./assetData/user_UID_data.csv", index=False, header=False)
 
                 await interaction.response.edit_message(content="変更完了しました", embed=None, view=None)
 
-        else:
-            pass
-
 
 class SelectScoreState(ui.View):
+    def __init__(self, cog):
+        super().__init__()
+        self.cog = cog
+
     @discord.ui.select(
         cls=ui.Select,
         placeholder="ビルド画像を生成",
@@ -191,116 +177,100 @@ class SelectScoreState(ui.View):
             discord.SelectOption(label="元素熟知"),
             discord.SelectOption(label="防御パーセンテージ"),
         ],
-
-
     )
     async def selectMenu(self, interaction: discord.Interaction, select: ui.Select):
-        if interaction.user.id == defaultUser or interaction.user.id == adminID:
-            global selectCharacterID, DataBase
-            DataBase = DataBase[int(selectCharacterID)]
+        if interaction.user.id == self.cog.defaultUser or interaction.user.id == adminID:
+            self.cog.DataBase = self.cog.DataBase[int(
+                self.cog.selectCharacterID)]
             ScoreState = select.values[0]
-            selectCharaID = showAvatarlist[int(selectCharacterID)]["avatarId"]
+            selectCharaID = self.cog.showAvatarlist[int(
+                self.cog.selectCharacterID)]["avatarId"]
             selectCharaHashID = characters[str(
                 selectCharaID)]["NameTextMapHash"]
 
-            # print(AvatarINFOlist)
-            # print(ScoreState)
-            global Name
-            Name = nameItem["ja"][str(selectCharaHashID)]
-            if Name == "旅人":  # 主人公の元素判断
-                TravelerElementID = DataBase["skillDepotId"]
+            self.cog.Name = nameItem["ja"][str(selectCharaHashID)]
+            if self.cog.Name == "旅人":
+                TravelerElementID = self.cog.DataBase["skillDepotId"]
                 TravelerElement = characters[str(
                     selectCharaID) + "-" + str(TravelerElementID)]["Element"]
                 Element = artifacter2.transeElement(TravelerElement)
-                Name = Name + "(" + Element + ")"
+                self.cog.Name = self.cog.Name + "(" + Element + ")"
 
             authorInfo = interaction.user
-
-            artifacter2.genJson(DataBase, showAvatarData,
-                                ScoreState, authorInfo)
+            artifacter2.genJson(
+                self.cog.DataBase, self.cog.showAvatarData, ScoreState, authorInfo)
             time.sleep(0.3)
             await interaction.response.defer(thinking=True)
             generate()
-            message = PlayerInfo[0] + ":"+str(defaultUID)+"の" + str(Name)
+            with open('./ArtifacterImageGen/data.json', 'r', encoding="utf-8") as json_file:
+                data = json.load(json_file)
+            const = data["Character"]["Const"]
+            if int(const) == 0:
+                const_message = "無凸"
+            elif int(const) == 6:
+                const_message = "完凸"
+            else:
+                const_message = str(const) + "凸"
+            message = self.cog.PlayerInfo[0] + ":" + str(
+                self.cog.defaultUID) + "の" + str(self.cog.Name) + " " + const_message
             await asyncio.sleep(0.5)
             await interaction.message.delete()
             await interaction.followup.send(content=message, file=discord.File(fp="./ArtifacterImageGen/Image.png"))
-        else:
-            pass
 
 
 class InputUID(ui.Modal):
-    global defaultUID
-
-    def __init__(self):
-        super().__init__(
-            title="原神のUIDを入力してください",
-        )
+    def __init__(self, cog):
+        super().__init__(title="原神のUIDを入力してください")
+        self.cog = cog
         self.uid = discord.ui.TextInput(
-            label="UID",
-            default=defaultUID,
-        )
+            label="UID", default=self.cog.defaultUID)
         self.add_item(self.uid)
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        global defaultUser, defaultUID, modeFlag
-
-        if interaction.user.id == defaultUser or interaction.user.id == int(adminID):
+        if interaction.user.id == self.cog.defaultUser or interaction.user.id == int(adminID):
             User_UID_Data = pd.read_csv(
                 "./assetData/user_UID_data.csv", header=None).values.tolist()
             pd.set_option('display.float_format', lambda x: '%.0f' % x)
-            data = []
-            dataSet = []
             wronFlag = 0
             for i, x in enumerate(User_UID_Data):
-                if x[0] == interaction.user.id:  # ID同じ場合
-                    if int(x[1]) == int(self.uid.value):  # 同じかつUIDが同じ場合
+                if x[0] == interaction.user.id:
+                    if int(x[1]) == int(self.uid.value):
                         pass
-                    elif int(x[1]) is not int(self.uid.value):  # UIDだけ違う場合
+                    elif int(x[1]) != int(self.uid.value):
                         User_UID_Data[i][1] = int(self.uid.value)
                         pd.DataFrame(User_UID_Data).to_csv(
                             "./assetData/user_UID_data.csv", index=False, header=False)
-                else:  # IDが違う
+                else:
                     wronFlag += 1
 
             if wronFlag == len(User_UID_Data):
                 new = [int(interaction.user.id), int(self.uid.value), None]
                 User_UID_Data.append(new)
                 print(User_UID_Data)
-
                 pd.DataFrame(User_UID_Data).to_csv(
                     "./assetData/user_UID_data.csv", index=False, header=False)
 
-            defaultUID = int(self.uid.value)
-            global DataBase, showAvatarlist, PlayerInfo
+            self.cog.defaultUID = int(self.uid.value)
             try:
-                DataBase, showAvatarlist, PlayerInfo, = artifacter2.getData(
+                self.cog.DataBase, self.cog.showAvatarlist, self.cog.PlayerInfo = artifacter2.getData(
                     int(self.uid.value))
-            except:
-                errer_msg = artifacter2.getData(
-                    int(self.uid.value))
-                # print(errer_msg)
-                await interaction.response.send_message(errer_msg)
+            except Exception as e:
+                await interaction.response.send_message(str(e))
                 return
 
-            # print(showAvatarlist)
-
             embed = discord.Embed(
-                title=PlayerInfo[0], color=discord.Color.blurple())
-            embed.set_thumbnail(url=PlayerInfo[4])
-            embed.add_field(name="冒険者ランク", value=PlayerInfo[1])
-            embed.add_field(name="世界ランク", value=PlayerInfo[2])
-            embed.set_image(url=PlayerInfo[3])
-            view = SelectCharacter()
+                title=self.cog.PlayerInfo[0], color=discord.Color.blurple())
+            embed.set_thumbnail(url=self.cog.PlayerInfo[4])
+            embed.add_field(name="冒険者ランク", value=self.cog.PlayerInfo[1])
+            embed.add_field(name="世界ランク", value=self.cog.PlayerInfo[2])
+            embed.set_image(url=self.cog.PlayerInfo[3])
+            view = SelectCharacter(self.cog)
             embed.set_footer(text="UID: " + str(self.uid.value))
-            print("UID:"+str(self.uid.value))
+            print("UID:" + str(self.uid.value))
 
             showCharaNameList = []
             showCharaLevelList = []
-
-            global selectStatus
-
-            for x in showAvatarlist:
+            for x in self.cog.showAvatarlist:
                 charaID = x["avatarId"]
                 HashID = characters[str(charaID)]["NameTextMapHash"]
                 charaName = nameItem["ja"][str(HashID)]
@@ -317,69 +287,49 @@ class InputUID(ui.Modal):
 
             await interaction.response.send_message(embeds=[embed], view=view)
 
-            # while selectStatus == 0:
-            #     await asyncio.sleep(1)
-        else:
-            print("your not same person", interaction.user.id)
-
 
 def generate():
     generation(read_json('ArtifacterImageGen/data.json'))
 
 
 def setOriginalCharacter(url, mode, Name, userName, beforName=None):
-    # 透過背景の画像を作成
     background = Image.new("RGBA", (2048, 1024), (0, 0, 0, 0))
 
-    # 画像を取得
     response = requests.get(url)
     image = Image.open(BytesIO(response.content))
 
-    # 画像がRGBAモードでない場合、RGBAモードに変換
     if image.mode != "RGBA":
         image = image.convert("RGBA")
 
-    # 新しい縦のサイズを指定
     new_height = 1024
-
-    # 縦のサイズを新しいサイズに変更（横幅は自動調整）
     original_width, original_height = image.size
     new_width = int(original_width * (new_height / original_height))
     resized_image = image.resize((new_width, new_height))
 
-    # 透過度情報がある場合のみ透過背景の中央に合成
     if "A" in resized_image.getbands():
         alpha = resized_image.split()[3]
-
-        # 透過背景の中央座標
         center_x = (background.width - resized_image.width) // 2
         center_y = (background.height - resized_image.height) // 2
-
         background.paste(resized_image, (center_x, center_y), mask=alpha)
     else:
-        # 透過背景の中央座標
         center_x = (background.width - resized_image.width) // 2
         center_y = (background.height - resized_image.height) // 2
-
         background.paste(resized_image, (center_x, center_y))
 
     save_path = "ArtifacterImageGen/character/" + \
         Name + "(" + userName + ")/avatar.png"
 
-    if mode == 1:  # 変わらない
+    if mode == 1:
         pass
-        # 保存するファイル名を指定
-
     elif mode == 2:
-        shutil.copytree("ArtifacterImageGen/character/"+Name,
+        shutil.copytree("ArtifacterImageGen/character/" + Name,
                         "ArtifacterImageGen/character/" + Name + "(" + userName + ")")
         try:
             shutil.rmtree("ArtifacterImageGen/character/" +
-                          beforName+"(" + userName+")")
+                          beforName + "(" + userName + ")")
         except:
             pass
 
-    # 画像を指定した名前で保存
     background.save(save_path)
 
 
