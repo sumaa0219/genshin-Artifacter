@@ -10,19 +10,45 @@
     "chanelID": 1161612212243284089,
     "DMID": "",
     "userID": 672094270072553533,
-    "message": "<@672094270072553533> 出勤書け"
+    "message": "<@672094270072553533>\n <@837911763810385961>が５時をお知らせします。\n出勤書け"
   },
-  "dasfagsa": {
+  "cometoMonday": {
     "status": "active",
     "time": {
-      "h": "20",
-      "m": "02"
+      "h": "08",
+      "m": "00"
     },
-    "day": "なし",
+    "day": "月",
+    "serverID": 929432903534923857,
+    "chanelID": 1099640633406259260,
+    "DMID": "",
+    "userID": 425853700112908289,
+    "message": "https://x.com/y_koga_wa/status/1807429674966122530?t=stXqbTnHqxP3Gmb-LUFQrg&s=19"
+  },
+  "come2monday": {
+    "status": "active",
+    "time": {
+      "h": "08",
+      "m": "00"
+    },
+    "day": "月",
+    "serverID": 836846944517226526,
+    "chanelID": 1225041219965419632,
+    "DMID": "",
+    "userID": 425853700112908289,
+    "message": "https://x.com/y_koga_wa/status/1807429674966122530?t=stXqbTnHqxP3Gmb-LUFQrg&s=19"
+  },
+  "aaaa": {
+    "status": "active",
+    "time": {
+      "h": "16",
+      "m": "10"
+    },
+    "day": "月",
     "serverID": 1200371385319575663,
     "chanelID": 1200375039418171432,
     "DMID": "",
     "userID": 425853700112908289,
-    "message": "sだsがsが"
+    "message": "dっsdfsdfsdsd"
   }
 }

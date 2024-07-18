@@ -22,14 +22,14 @@ class TaskCog(commands.Cog):
     async def task_message(self):
         update_task()
         task_keys_list = list(taskList.keys())
-        taskExcute = False
         for key in task_keys_list:
+            taskExcute = False
             guild_id = 0
             channel_id = 0
             message = ""
             if taskList[key]["status"] == "active":
                 dt_now = datetime.datetime.now()
-                if dt_now.strftime('%a') == str(taskList[key]["day"]):
+                if str(taskList[key]["day"]) == dt_now.strftime('%a'):
                     taskExcute = True
                 elif str(taskList[key]["day"]) == "なし":
                     taskExcute = True
