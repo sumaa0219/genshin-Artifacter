@@ -1,3 +1,4 @@
 import cog.voicevox
+import os
 
-print(cog.voicevox.text_2_wav("こんにちは、世界！", 1))
+print(os.path.isfile(f"VC/620571475065307137.json"))

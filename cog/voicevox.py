@@ -130,13 +130,12 @@ class VoicevoxCog(commands.Cog):
             speaker_id = int(speaker.get(str(message.author.id), 8))
             read_msg = read_msg.replace("_", "")
 
-            if os.path.isfile(f"VC/{message.guild.id}.json"):
-                with open(f"VC/{message.guild.id}.json", "r", encoding="UTF-8") as f:
+            if os.path.isfile(f"./VC/{message.guild.id}.json"):
+                with open(f"./VC/{message.guild.id}.json", "r", encoding="UTF-8") as f:
                     word = json.load(f)
-                read_list = [one_dic[1] for one_dic in word.items()]
-                read_msg = read_msg.format(
-                    *[read_msg.replace(one_dic[0], '{'+str(i)+'}') for i, one_dic in enumerate(word.items())])
-
+                    # 辞書のキーに基づいてread_msgをフォーマット
+                    for key, value in word.items():
+                        read_msg = read_msg.replace(key, value)
             read_msg = re.sub(r"https?://.*?\s|https?://.*?$", "URL", read_msg)
             read_msg = re.sub(r"\|\|.*?\|\|", "ネタバレ", read_msg)
 
@@ -198,11 +197,14 @@ class VoicevoxCog(commands.Cog):
             speaker_id = int(speaker.get(str(member.id), 8))
 
             if os.path.isfile(f"./VC/{member.guild.id}.json"):
+                print("dict load")
                 with open(f"./VC/{member.guild.id}.json", "r", encoding="UTF-8") as f:
                     word = json.load(f)
-                read_list = [one_dic[1] for one_dic in word.items()]
-                read_msg = read_msg.format(
-                    *[read_msg.replace(one_dic[0], '{'+str(i)+'}') for i, one_dic in enumerate(word.items())])
+                    # 辞書のキーに基づいてread_msgをフォーマット
+                    for key, value in word.items():
+                        read_msg = read_msg.replace(key, value)
+
+            print(read_msg)
 
             content = text_2_wav(read_msg, speaker_id)
             audio_data = io.BytesIO(content)
