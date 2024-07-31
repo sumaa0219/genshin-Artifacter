@@ -6,6 +6,8 @@ import base64
 from io import BytesIO
 import datetime
 import os
+from mylogger import getLogger
+logger = getLogger(__name__)
 
 catCafeID = 836846944517226526
 hsbfig = os.listdir("assetData/catcafe")

@@ -5,6 +5,8 @@ import time
 import os
 from dotenv import load_dotenv
 import datetime
+from mylogger import getLogger
+logger = getLogger(__name__)
 
 
 load_dotenv()
@@ -44,11 +46,13 @@ class ManageCog(commands.Cog):
                 await message.delete()
                 maxcuount += 1
                 time.sleep(0.1)
+        logger.info(f"{member.display_name}'s last {limit} messages deleted.")
         await interaction.followup.send(
             f"{member.display_name}'s last {limit} messages deleted."
         )
 
     @app_commands.command(name="adminsay", description="開発者専用")
+    @app_commands.check(is_admin)
     async def send_message(self, interaction: discord.Interaction, guild_id: str, channel_id: str, message: str):
         guild = self.bot.get_guild(int(guild_id))
         channel = guild.get_channel(int(channel_id))
@@ -60,36 +64,52 @@ class ManageCog(commands.Cog):
         await interaction.response.defer()
         os.system("steamcmd +login anonymous +app_update 2394010 validate +quit")
         os.system("sudo systemctl start PalServer")
+        logger.info(f"PalServer started excuted by {interaction.user.name}")
         await interaction.followup.send("起動完了 sssumaa.com:8211")
 
     @app_commands.command(name="palstop", description="パルワールドサーバーを停止します")
     async def palstop(self, interaction: discord.Interaction):
         await interaction.response.defer()
         os.system("sudo systemctl stop PalServer")
+        logger.info(f"PalServer stopped excuted by {interaction.user.name}")
         await interaction.followup.send("停止完了")
 
     @app_commands.command(name="minecraftstart", description="マイクラサーバーを起動します")
     async def palstart(self, interaction: discord.Interaction):
         await interaction.response.defer()
         os.system("sudo systemctl start minecraftserver")
+        logger.info(
+            f"MinecraftServer started excuted by {interaction.user.name}")
         await interaction.followup.send("起動完了 sssumaa.com:25565")
 
     @app_commands.command(name="minecraftstop", description="マイクラサーバーを停止します")
     async def palstop(self, interaction: discord.Interaction):
         await interaction.response.defer()
         os.system("sudo systemctl stop minecraftserver")
+        logger.info(
+            f"MinecraftServer stopped excuted by {interaction.user.name}")
         await interaction.followup.send("停止完了")
 
     @app_commands.command(name="restart", description="botを再起動します")
     async def restart(self, interaction: discord.Interaction):
-        await interaction.response.send_message("再起動完了")
+        await interaction.response.send_message("再起動します")
+        logger.info(f"Restart excuted by {interaction.user.name}")
         os.system("sudo systemctl restart genshin-artifacter")
+
+    @app_commands.command(name="reloadcog", description="指定したcogを更新します")
+    async def reloadcog(self, interaction: discord.Interaction, cogname: str):
+        await interaction.response.defer()
+        print("reload cog...", cogname)
+        await self.bot.reload_extension(cogname)
+        await self.bot.tree.sync()
+        await interaction.followup.send("リロード完了")
 
     @app_commands.command(name="timeout", description="指定した時間、メンションされたユーザーをタイムアウトします。")
     @commands.has_permissions(administrator=True)
     async def timeout(self, interaction: discord.Interaction, member: discord.Member, time: str):
         if member.id == self.AdminID:
             print("bot管理者をタイムアウトすることはできません。")
+            logger.info(f"{interaction.user.name} tried to timeout bot admin.")
             await interaction.response.send_message("bot管理者をタイムアウトすることはできません。")
             return
         timeUnit = time[-1]
@@ -114,7 +134,8 @@ class ManageCog(commands.Cog):
         else:
             await interaction.response.send_message("時間の単位が不正です。秒、分、時、日のいずれかを使用してください。")
             return
-
+        logger.info(
+            f"{interaction.user.name} timed out {member.name} for {timeoutDuration}{unit}")
         await interaction.response.send_message("タイムアウトを実行しました。", ephemeral=True)
 
     # @app_commands.command(name="load", description="指定されたcogをロードします")

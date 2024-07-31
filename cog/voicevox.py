@@ -8,8 +8,8 @@ from collections import defaultdict, deque
 import re
 import io
 import requests
-import tempfile
-import random
+from mylogger import getLogger
+logger = getLogger(__name__)
 
 
 connected_channel = {}
@@ -41,8 +41,8 @@ class VoicevoxCog(commands.Cog):
     @app_commands.command(name="join", description="ボイスチャンネルに接続します")
     async def join(self, interaction: discord.Interaction):
         clear_queue(interaction.guild_id)
-        print(f"""<join command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{
-              interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}""")
+        logger.info("""<join command>\n{interaction.guild.name}:{interaction.guild_id}\n{interaction.channel.name}:{
+              interaction.channel_id}\nuserName:{interaction.user.name}  userID:{interaction.user.id}""")
         if interaction.user.voice is None:
             await interaction.response.send_message("ボイスチャンネルに接続していません", ephemeral=True)
             return
@@ -57,8 +57,11 @@ class VoicevoxCog(commands.Cog):
                 interaction.guild_id)] = interaction.user.voice.channel.id
             try:
                 print(f"接続中...{interaction.user.voice.channel}")
+                logger.info(
+                    f"Try to connect...{interaction.user.voice.channel}")
                 await interaction.user.voice.channel.connect(timeout=20, reconnect=True)
                 await interaction.response.send_message("接続しました")
+                logger.info(f"Connect complete")
 
             except Exception as e:
                 print(e)
@@ -72,6 +75,8 @@ class VoicevoxCog(commands.Cog):
         await interaction.guild.voice_client.disconnect(force=True)
         discord.AudioSource.cleanup()
         await interaction.response.send_message("切断しました")
+        logger.info(
+            f"Disconnect complete {interaction.guild.voice_client.channel}")
         connected_channel.pop(interaction.guild_id, None)
 
     @app_commands.command(name="add", description="辞書に単語の読み方登録します")
@@ -84,6 +89,8 @@ class VoicevoxCog(commands.Cog):
                 json.dump(newJson, f, indent=2, ensure_ascii=False)
         word = load_dict(interaction)
 
+        logger.info(
+            f"<add command>\n{interaction.guild.name}:{interaction.guild_id}\nuserName:{interaction.user.name}  userID:{interaction.user.id}\n word:{vocabulary}  pronunciation:{pronunciation}")
         word[vocabulary] = pronunciation
         with open(f"./VC/{interaction.guild.id}.json", "w", encoding="UTF-8") as f:
             f.write(json.dumps(word, indent=2, ensure_ascii=False))
@@ -97,6 +104,8 @@ class VoicevoxCog(commands.Cog):
     @app_commands.command(name="delete", description="辞書に単語の読み方削除します")
     async def delWords(self, interaction: discord.Interaction, vocabulary: str):
         word = load_dict(interaction)
+        logger.info(
+            f"<delete command>\n{interaction.guild.name}:{interaction.guild_id}\nuserName:{interaction.user.name}  userID:{interaction.user.id}\n word:{vocabulary}")
         if vocabulary in word:
             del word[vocabulary]
             with open(f"./VC/{interaction.guild.id}.json", "w", encoding="UTF-8") as f:
@@ -248,6 +257,8 @@ class SelectSpeakerTention(ui.View):
         dict[interaction.user.id] = select.values[0]
         with open(fileName, "w", encoding="UTF-8") as f:
             json.dump(dict, f, indent=2, ensure_ascii=False)
+        logger.info(
+            f"User {interaction.user.name} change speaker to {select.values[0]}")
         await interaction.response.send_message(f"変更が完了しました")
 
 

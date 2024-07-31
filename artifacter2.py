@@ -4,6 +4,8 @@ import json
 import time
 import discord
 import update
+from mylogger import getLogger
+logger = getLogger(__name__)
 
 baseURL = "https://enka.network/ui/"
 
@@ -44,7 +46,7 @@ def getData(UID):
     global GUID
     GUID = UID
     URL = "https://enka.network/api/uid/" + str(UID)
-    print(URL)
+    logger.info(f"{URL}")
     r = requests.get(URL)
     status = r.status_code
     if status == 424:

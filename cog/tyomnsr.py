@@ -5,12 +5,15 @@ import random
 import datetime
 import jsonDB
 import math
+from mylogger import getLogger
+logger = getLogger(__name__)
 
 serverID = 929432903534923857
 announcementChannelID = 929436378301886484
 moderaterOnlyChannelID = 1161612212243284089
 tyomnserUserData = {}
 userDataFile = "assetData/typmnsr.json"
+nakanoFlag = False
 
 
 class TyomnsrCog(commands.Cog):
@@ -41,14 +44,28 @@ class TyomnsrCog(commands.Cog):
                 serverID).get_channel(announcementChannelID)
             await channnel.send(f"{userName}を　逃がしてあげた\nばいばい　{userName}")
 
+    @app_commands.command(name="nakano", description="中野への返信を切り替えます。")
+    @app_commands.guilds(serverID)
+    @commands.has_permissions(administrator=True)
+    async def nakano(self, interaction: discord.Interaction):
+        global nakanoFlag
+        if nakanoFlag == False:
+            nakanoFlag = True
+            await interaction.response.send_message("中野への返信を有効にしました。", ephemeral=True)
+        else:
+            nakanoFlag = False
+            await interaction.response.send_message("中野への返信を無効にしました。", ephemeral=True)
+
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         global tyomnserUserData
         pass
         if message.author.bot:
             return
         else:
             if message.guild.id == serverID:
+                if message.author.id == 812948479973523486 and nakanoFlag == True:
+                    await message.reply("ざーこ")
                 try:
                     loadUserData()
                     userID = str(message.author.id)

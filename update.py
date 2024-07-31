@@ -2,6 +2,8 @@ import requests
 import json
 import os
 import subprocess
+from mylogger import getLogger
+logger = getLogger(__name__)
 
 with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_file:
     characters = json.load(json_file)
@@ -11,6 +13,7 @@ with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
 
 
 def updateWeightHSR():
+    logger.info("update WeightHSR from github")
     # git pullを実行するディレクトリ
     directory = 'StarRailScore'
     # subprocessを使用してgit pullを実行
@@ -18,6 +21,7 @@ def updateWeightHSR():
 
 
 def updateAPI():
+    logger.info("update API-docs from github")
     # git pullを実行するディレクトリ
     directory = 'API-docs'
     # subprocessを使用してgit pullを実行
@@ -44,6 +48,8 @@ def updateGenshin_Character():
         name = convertNameGenshin(str(characters[chara]["NameTextMapHash"]))
         dir = f"./ArtifacterImageGen/character/{name}"
         if not os.path.exists(dir):
+            logger.warning(f"New character found: {name}")
+            logger.info(f"start to download character: {name}")
             os.makedirs(dir)
             # 画像の保存
             # 凸画像
@@ -87,6 +93,8 @@ def checkUpdateGenshin_relic(equipType, icon, nameTextMapHash):
     name = convertNameGenshin(nameTextMapHash)
     dir = f"./ArtifacterImageGen/Artifact/{name}"
     if not os.path.exists(dir):
+        logger.warning(f"New relic found: {name}")
+        logger.info(f"start to download relic: {name}")
         os.makedirs(dir)
     if equipType == "EQUIP_BRACER":
         typeName = "flower"
@@ -106,4 +114,4 @@ def update():
     updateAPI()
     updateGenshin_Character()
     updateWeightHSR()
-    print("update complete!\n")
+    logger.info("update complete!")

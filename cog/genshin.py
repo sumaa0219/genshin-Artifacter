@@ -13,6 +13,8 @@ import requests
 from io import BytesIO
 import asyncio
 import time
+from mylogger import getLogger
+logger = getLogger(__name__)
 
 baseURL = "https://enka.network/ui/"
 load_dotenv()

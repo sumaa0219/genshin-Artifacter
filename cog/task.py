@@ -4,6 +4,8 @@ import discord
 import json
 import datetime
 from cog.manage import send
+from mylogger import getLogger
+logger = getLogger(__name__)
 
 interval_seconds = 60  # 60秒ごとにタスクを確認
 taskList = {}
@@ -43,6 +45,7 @@ class TaskCog(commands.Cog):
                         guild_id = taskList[key]["serverID"]
                         channel_id = taskList[key]["chanelID"]
                         message = taskList[key]["message"]
+                        logger.info(f"Task:{key} is executed.")
                         await send(guild_id, channel_id, message)
 
     # イベントリスナー(ボットが起動したときやメッセージを受信したとき等)
@@ -74,7 +77,7 @@ class TaskCog(commands.Cog):
         with open('./assetData/task.json', 'w', encoding="utf-8") as json_file:
             json.dump(taskList, json_file, ensure_ascii=False, indent=2)
         update_task()
-
+        logger.info(f"Task:{taskname} is added.")
         await interaction.response.send_message(f"新規タスク`{taskname}'を{hour}時{minutes}分に追加しました。")
 
     @app_commands.command(name="switchtask", description="指定されたタスクのアクティブ状態を切り替えます")

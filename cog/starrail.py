@@ -8,6 +8,8 @@ import HSRImageGen.format as HSRformat
 import HSRImageGen.imageGen as HSRImageGen
 import os
 from dotenv import load_dotenv
+from mylogger import getLogger
+logger = getLogger(__name__)
 
 load_dotenv()
 adminID = os.environ['adminID']

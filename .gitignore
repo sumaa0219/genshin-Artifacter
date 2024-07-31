@@ -5,3 +5,4 @@ __pycache__
 *.wav
 .python-version
 start.sh
+log
