@@ -16,7 +16,7 @@ connected_channel = {}
 vc_connected_channel = {}
 queue_dict = defaultdict(deque)  # キュー
 channelConnection = {}
-mainVoicevoxURL = "http://192.168.1.200:50021/"
+mainVoicevoxURL = "http://192.168.1.13:50021/"
 subVoicevoxURL = "http://localhost:50021/"
 
 
