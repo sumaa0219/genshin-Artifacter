@@ -104,6 +104,14 @@ class ManageCog(commands.Cog):
         await self.bot.tree.sync()
         await interaction.followup.send("リロード完了")
 
+    @app_commands.command(name="loadcog", description="cogをロードします")
+    async def loadcog(self, interaction: discord.Interaction, cogname: str):
+        await interaction.response.defer()
+        print("load cog...", cogname)
+        await self.bot.load_extension(cogname)
+        await self.bot.tree.sync()
+        await interaction.followup.send("ロード完了")
+
     @app_commands.command(name="timeout", description="指定した時間、メンションされたユーザーをタイムアウトします。")
     @commands.has_permissions(administrator=True)
     async def timeout(self, interaction: discord.Interaction, member: discord.Member, time: str):

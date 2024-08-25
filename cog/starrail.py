@@ -135,7 +135,7 @@ class SelectHSRCharacter(ui.View):
             await interaction.response.defer(thinking=True)
             res = HSR.getDataFromUID(self.cog.default_HSR_UID)
             charaInfoData, weaponInfo, relicList, skillList, relicSetList = HSRformat.formatCharaData(
-                res["detailInfo"]["avatarDetailList"][selectCharacterID])
+                res["detailInfo"]["avatarDetailList"][int(selectCharacterID)])
             HSRImageGen.HSR_generate(
                 "ja", charaInfoData, weaponInfo, relicList, skillList, relicSetList)
 

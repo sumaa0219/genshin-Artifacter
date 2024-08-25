@@ -12,14 +12,6 @@ with open('./API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
     nameItem = json.load(json_file)
 
 
-def updateWeightHSR():
-    logger.info("update WeightHSR from github")
-    # git pullを実行するディレクトリ
-    directory = 'StarRailScore'
-    # subprocessを使用してgit pullを実行
-    subprocess.Popen(['git', 'pull'], cwd=directory)
-
-
 def updateAPI():
     logger.info("update API-docs from github")
     # git pullを実行するディレクトリ
@@ -113,5 +105,4 @@ def checkUpdateGenshin_relic(equipType, icon, nameTextMapHash):
 def update():
     updateAPI()
     updateGenshin_Character()
-    updateWeightHSR()
     logger.info("update complete!")
