@@ -19,11 +19,9 @@ class playerData(BaseModel):
     name: str
     level: int
     headIcon: int
-    platform: str
     friendCount: int
     achievmentCount: int
     worldLevel: int
-    isDisplayAvatar: bool
 
 
 class showCharaData(BaseModel):
@@ -53,11 +51,9 @@ def getInfo(UID: int):
         name="",
         level=0,
         headIcon=0,
-        platform="",
         friendCount=0,
         achievmentCount=0,
-        worldLevel=0,
-        isDisplayAvatar=False
+        worldLevel=0
     )
     # データ取得
     resJson = getDataFromUID(UID)
@@ -67,11 +63,9 @@ def getInfo(UID: int):
     playerInfo.name = resJson["detailInfo"]["nickname"]
     playerInfo.level = resJson["detailInfo"]["level"]
     playerInfo.headIcon = resJson["detailInfo"]["headIcon"]
-    playerInfo.platform = resJson["detailInfo"]["platform"]
     playerInfo.friendCount = resJson["detailInfo"]["friendCount"]
     playerInfo.achievmentCount = resJson["detailInfo"]["recordInfo"]["achievementCount"]
     playerInfo.worldLevel = resJson["detailInfo"]["worldLevel"]
-    playerInfo.isDisplayAvatar = resJson["detailInfo"]["isDisplayAvatar"]
 
     showCharaInfoList = []
     for chara in resJson["detailInfo"]["avatarDetailList"]:
