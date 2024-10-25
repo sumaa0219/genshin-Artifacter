@@ -234,6 +234,7 @@ class InputUID(ui.Modal):
                 "./assetData/user_UID_data.csv", header=None).values.tolist()
             pd.set_option('display.float_format', lambda x: '%.0f' % x)
             wronFlag = 0
+            await interaction.response.defer()
             for i, x in enumerate(User_UID_Data):
                 if x[0] == interaction.user.id:
                     if int(x[1]) == int(self.uid.value):
@@ -257,7 +258,7 @@ class InputUID(ui.Modal):
                 self.cog.DataBase, self.cog.showAvatarlist, self.cog.PlayerInfo = artifacter2.getData(
                     int(self.uid.value))
             except Exception as e:
-                await interaction.response.send_message(str(e))
+                await interaction.followup.send(str(e))
                 return
 
             embed = discord.Embed(
@@ -287,7 +288,8 @@ class InputUID(ui.Modal):
                     value=i,
                 )
 
-            await interaction.response.send_message(embeds=[embed], view=view)
+            # await interaction.response.send_message(embeds=[embed], view=view)
+            await interaction.followup.send(embeds=[embed], view=view)
 
 
 def generate():
