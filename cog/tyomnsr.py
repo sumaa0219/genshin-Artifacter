@@ -19,6 +19,7 @@ nakanoFlag = False
 class TyomnsrCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.gomikasuFlag = False
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -86,8 +87,19 @@ class TyomnsrCog(commands.Cog):
                     # message.channel.send(f"{message.author.display_name} はまだ登録されていません。")
                     pass
 
-            if message.content == "!gomikasu" or message.content == "ゴミカス" or message.content == "ごみかす":
-                await message.channel.send("https://cdn.discordapp.com/attachments/929437569123516446/1299313779443499018/RPReplay_Final1620286734.mov?ex=671cbfc1&is=671b6e41&hm=10e7edc3fcc0c5fdb4c0ece22744c305f78d2a8f73f5ce28a153d02e2bfcbb5d&")
+            if self.gomikasuFlag == True:
+                if message.content == "!gomikasu" or message.content == "ゴミカス" or message.content == "ごみかす":
+                    await message.channel.send("https://cdn.discordapp.com/attachments/929437569123516446/1299313779443499018/RPReplay_Final1620286734.mov?ex=671cbfc1&is=671b6e41&hm=10e7edc3fcc0c5fdb4c0ece22744c305f78d2a8f73f5ce28a153d02e2bfcbb5d&")
+
+    @app_commands.command(name="gomikasu", description="ゴミカスを切り替えます ")
+    @app_commands.guilds(serverID)
+    async def gomikasu(self, interaction: discord.Interaction):
+        if self.gomikasuFlag == False:
+            self.gomikasuFlag = True
+            await interaction.response.send_message("ゴミカスを有効にしました。")
+        else:
+            self.gomikasuFlag = False
+            await interaction.response.send_message("ゴミカスを無効にしました。")
 
     @app_commands.command(name="rank", description="レベルを確認します。")
     @app_commands.guilds(serverID)

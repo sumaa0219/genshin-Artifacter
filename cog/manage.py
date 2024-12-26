@@ -14,7 +14,7 @@ adminID = os.environ['adminID']
 
 
 def is_admin(interaction: discord.Interaction):
-    return interaction.user.id == adminID
+    return str(interaction.user.id) == str(adminID)
 
 # commands.Cogを継承する
 
@@ -56,8 +56,8 @@ class ManageCog(commands.Cog):
     async def send_message(self, interaction: discord.Interaction, guild_id: str, channel_id: str, message: str):
         guild = self.bot.get_guild(int(guild_id))
         channel = guild.get_channel(int(channel_id))
-        await channel.send(message)
         await interaction.response.send_message("送信完了")
+        await channel.send(message)
 
     @app_commands.command(name="palstart", description="パルワールドサーバーを起動します")
     async def palstart(self, interaction: discord.Interaction):
