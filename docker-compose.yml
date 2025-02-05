@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    container_name: 'python'
+    container_name: 'genshin-Artifacter'
     working_dir: '/genshin-Artifacter'
     tty: true
     volumes:
