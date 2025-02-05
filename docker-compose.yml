@@ -1,0 +1,12 @@
+version: '3'
+services:
+  python:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: 'python'
+    working_dir: '/genshin-Artifacter'
+    tty: true
+    volumes:
+      - ./:/genshin-Artifacter

@@ -43,3 +43,4 @@ def addScore(charaID: int, MainOrSub: str, level: int, place: str, type: str, va
         weight = HSR_weight[MainOrSub][type]
         max = HSR_max[type]
         return value / max * weight * 50
+
