@@ -19,7 +19,7 @@ logger = getLogger(__name__)
 
 # ubuntu用
 if not discord.opus.is_loaded():
-    discord.opus.load_opus("libopus.so.0")
+    discord.opus.load_opus("libopus/lib/libopus.so.0")
     if not discord.opus.is_loaded():
         discord.opus.load_opus("/usr/lib/x86_64-linux-gnu/libopus.so.0")
         print("subopus loaded")

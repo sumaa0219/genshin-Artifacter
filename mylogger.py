@@ -1,6 +1,14 @@
 # myLogger.py
 
 from logging import getLogger, handlers, Formatter, DEBUG
+import os
+
+if os.path.exists('./log') == False:
+    os.mkdir('./log')
+
+if os.path.exists('./log/app.log') == False:
+    with open('./log/app.log', 'w') as f:
+        pass
 
 
 def set_logger():
