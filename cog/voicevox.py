@@ -16,7 +16,7 @@ connected_channel = {}
 vc_connected_channel = {}
 queue_dict = defaultdict(deque)  # キュー
 channelConnection = {}
-mainVoicevoxURL = "http://192.168.1.18:50021/"
+mainVoicevoxURL = "http://192.168.1.28:50021/"
 subVoicevoxURL = "http://localhost:50021/"
 
 
@@ -308,7 +308,9 @@ def text_2_wav(text, speaker_id, max_retry=20):
         try:
             response = requests.post(
                 f"{mainVoicevoxURL}audio_query", params=query_payload, timeout=10)
+            print(response.status_code)
             if response.status_code == 200:
+                print("main")
                 query_data = response.json()
                 synth_payload = {"speaker": speaker_id}
                 for _ in range(max_retry):
@@ -321,6 +323,7 @@ def text_2_wav(text, speaker_id, max_retry=20):
             response = requests.post(
                 f"{subVoicevoxURL}audio_query", params=query_payload, timeout=10)
             if response.status_code == 200:
+                print("sub")
                 query_data = response.json()
                 synth_payload = {"speaker": speaker_id}
                 for _ in range(max_retry):

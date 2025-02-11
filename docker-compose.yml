@@ -1,7 +1,7 @@
 version: '3'
 services:
   python:
-    restart: always
+    restart: unless-stopped
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -10,3 +10,8 @@ services:
     tty: true
     volumes:
       - ./:/genshin-Artifacter
+  voicevox_engine:
+    image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+    ports:
+      - '192.168.1.28:50021:50021'
+    restart: unless-stopped
