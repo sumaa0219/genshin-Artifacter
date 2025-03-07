@@ -47,7 +47,7 @@ def getData(UID):
     GUID = UID
     URL = "https://enka.network/api/uid/" + str(UID)
     logger.info(f"{URL}")
-    r = requests.get(URL)
+    r = requests.get(URL, timeout=20)
     status = r.status_code
     if status == 424:
         return "EnkaAPIが停止しています\nしばらくお待ちください"
