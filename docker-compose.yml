@@ -10,8 +10,20 @@ services:
     tty: true
     volumes:
       - ./:/genshin-Artifacter
+    networks:
+      - genshin-Artifacter
+    depends_on:
+      - voicevox_engine
+
   voicevox_engine:
     image: voicevox/voicevox_engine:cpu-latest
     ports:
       - '50021:50021'
     restart: always
+    container_name: 'voicevox_engine'
+    networks:
+      - genshin-Artifacter
+
+networks:
+  genshin-Artifacter:
+    driver: bridge

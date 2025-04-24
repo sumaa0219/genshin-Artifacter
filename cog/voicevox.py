@@ -16,7 +16,7 @@ connected_channel = {}
 vc_connected_channel = {}
 queue_dict = defaultdict(deque)  # キュー
 channelConnection = {}
-mainVoicevoxURL = "http://192.168.1.28:50021/"
+mainVoicevoxURL = "http://voicevox_engine:50021/"
 subVoicevoxURL = "http://localhost:50021/"
 
 
@@ -145,7 +145,7 @@ class VoicevoxCog(commands.Cog):
                     # 辞書のキーに基づいてread_msgをフォーマット
                     for key, value in word.items():
                         read_msg = read_msg.replace(key, value)
-            read_msg = re.sub(r"https?://.*?\s|https?://.*?$", "URL", read_msg)
+            read_msg = re.sub(r"https?://.*?\s|https?://.*?$", "URL省略", read_msg)
             read_msg = re.sub(r"\|\|.*?\|\|", "ネタバレ", read_msg)
 
             if "<@" and ">" in message.content:
