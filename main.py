@@ -60,6 +60,7 @@ async def setup_hook():
 async def on_ready():
     update.update()
     await bot.change_presence(activity=discord.Game(name=str(len(bot.guilds))+"servers"))
+    await bot.change_presence(activity=discord.Game(name="サーバー試験運用"))
     logger.info("bot is ready")
 
 

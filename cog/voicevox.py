@@ -71,10 +71,10 @@ class VoicevoxCog(commands.Cog):
         if interaction.guild.voice_client is None:
             await interaction.response.send_message("ボイスチャンネルに接続していません", ephemeral=True)
             return
-
-        await interaction.guild.voice_client.disconnect(force=True)
-        discord.AudioSource.cleanup()
+        
         await interaction.response.send_message("切断しました")
+        await interaction.guild.voice_client.disconnect(force=True)
+        discord.AudioSource.cleanup(self)
         logger.info(
             f"Disconnect complete {interaction.guild.voice_client.channel}")
         connected_channel.pop(interaction.guild_id, None)
