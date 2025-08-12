@@ -13,6 +13,7 @@ import requests
 from io import BytesIO
 import asyncio
 import time
+import glob
 from mylogger import getLogger
 logger = getLogger(__name__)
 
@@ -199,7 +200,7 @@ class SelectScoreState(ui.View):
                 self.cog.Name = self.cog.Name + "(" + Element + ")"
 
             authorInfo = interaction.user
-            artifacter2.genJson(
+            good_filepath = artifacter2.genJson(
                 self.cog.DataBase, self.cog.showAvatarData, ScoreState, authorInfo)
             time.sleep(0.3)
             await interaction.response.defer(thinking=True)
@@ -217,7 +218,32 @@ class SelectScoreState(ui.View):
                 self.cog.defaultUID) + "の" + str(self.cog.Name) + " " + const_message
             await asyncio.sleep(0.5)
             await interaction.message.delete()
-            await interaction.followup.send(content=message, file=discord.File(fp="./ArtifacterImageGen/Image.png"))
+            
+            
+            
+            # 画像ファイルとGOODファイルの両方を送信
+            files = [discord.File(fp="./ArtifacterImageGen/Image.png")]
+            
+            # GOODファイルが存在する場合のみ追加
+            if good_filepath and os.path.exists(good_filepath):
+                files.append(discord.File(fp=good_filepath))
+                print(f"GOODファイルを送信に追加しました: {good_filepath}")
+            else:
+                print("GOODファイルが見つからないため、画像のみ送信します")
+            
+            # 古いGOODファイルを削除
+            try:
+                old_good_files = glob.glob("./ArtifacterImageGen/Artifacter-GOOD-*.json")
+                for old_file in old_good_files:
+                    try:
+                        os.remove(old_file)
+                        print(f"古いGOODファイルを削除しました: {old_file}")
+                    except Exception as e:
+                        print(f"古いGOODファイルの削除に失敗しました: {old_file}, エラー: {e}")
+            except Exception as e:
+                print(f"古いGOODファイルの検索に失敗しました: {e}")
+            
+            await interaction.followup.send(content=message, files=files)
 
 
 class InputUID(ui.Modal):

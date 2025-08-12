@@ -182,10 +182,16 @@ def formatCharaData(allCharaData):
                 )
                 addStatus(statusInfos, subStatusInfo.type, subStatusInfo.value)
                 relicInfo.subAffix.append(subStatusInfo)
-
-            relicInfo.score = score.calculationScore(
-                charaInfoData.nameID, relicInfo)
-            relicList.append(relicInfo)
+            
+            try:
+                relicInfo.score = score.calculationScore(
+                    charaInfoData.nameID, relicInfo)
+                relicList.append(relicInfo)
+            except Exception as e:
+                print(f"Error calculating relic score: {e}")
+                relicInfo.score = 0  # Default score if calculation fails
+                relicList.append(relicInfo)  # Add relic even if score calculation fails
+                continue
     except:
         relicList = []
 

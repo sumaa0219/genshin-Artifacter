@@ -4,6 +4,7 @@ import json
 import time
 import discord
 import update
+from datetime import datetime
 from mylogger import getLogger
 logger = getLogger(__name__)
 
@@ -21,8 +22,93 @@ with open('assetData/OptionInfo.json', 'r', encoding="utf-8") as json_file:
 with open('API-docs/store/loc.json', 'r', encoding="utf-8") as json_file:
     nameItem = json.load(json_file)
 
+with open('assetData/good_conversion_mapping.json', 'r', encoding="utf-8") as json_file:
+    good_mapping = json.load(json_file)
+
 
 GUID = 0
+
+def get_slot_from_position(position):
+    """聖遺物の位置からslotKeyを決定"""
+    if position == 0:  # flower
+        return 'flower'
+    elif position == 1:  # plume
+        return 'plume'
+    elif position == 2:  # sands
+        return 'sands'
+    elif position == 3:  # goblet
+        return 'goblet'
+    elif position == 4:  # circlet
+        return 'circlet'
+    return 'flower'  # デフォルト
+
+def convert_to_good_format(flowerStatus, wingStatus, clockStatus, cupStatus, crownStatus):
+    """聖遺物データをGOOD形式に変換"""
+    artifacts = []
+    artifact_data = [
+        (flowerStatus, 'flower'),
+        (wingStatus, 'plume'),
+        (clockStatus, 'sands'),
+        (cupStatus, 'goblet'),
+        (crownStatus, 'circlet')
+    ]
+    
+    artifact_id = 0
+    
+    for artifact_status, slot_key in artifact_data:
+        if len(artifact_status) == 0:
+            continue
+            
+        # データ構造: [聖遺物セット名, レベル, レアリティ, メインステータス名, メインステータス値, サブ1名, サブ1値, サブ2名, サブ2値, サブ3名, サブ3値, サブ4名, サブ4値]
+        if len(artifact_status) < 13:
+            continue
+            
+        set_name_jp = artifact_status[0]
+        level = artifact_status[1]
+        rarity = artifact_status[2]
+        main_stat_name_jp = artifact_status[3]
+        main_stat_value = artifact_status[4]
+        
+        # セット名をGOOD形式に変換
+        set_key = good_mapping["artifact_sets"].get(set_name_jp, set_name_jp)
+        
+        # メインステータスを変換
+        main_stat_key = good_mapping["stats"].get(main_stat_name_jp, main_stat_name_jp)
+        
+        # サブステータスを変換
+        substats = []
+        for i in range(4):
+            sub_stat_index = 5 + i * 2
+            sub_value_index = 6 + i * 2
+            
+            if sub_stat_index < len(artifact_status) and sub_value_index < len(artifact_status):
+                sub_stat_name_jp = artifact_status[sub_stat_index]
+                sub_stat_value = artifact_status[sub_value_index]
+                
+                if sub_stat_name_jp and sub_stat_value:
+                    sub_stat_key = good_mapping["stats"].get(sub_stat_name_jp, sub_stat_name_jp)
+                    substats.append({
+                        "key": sub_stat_key,
+                        "value": float(sub_stat_value)
+                    })
+        
+        # GOOD形式の聖遺物オブジェクトを作成
+        artifact = {
+            "setKey": set_key,
+            "slotKey": slot_key,
+            "rarity": int(rarity),
+            "mainStatKey": main_stat_key,
+            "level": int(level),
+            "substats": substats,
+            "location": "",
+            "lock": False,
+            "id": artifact_id
+        }
+        
+        artifacts.append(artifact)
+        artifact_id += 1
+    
+    return artifacts
 
 
 def transeElement(Element):
@@ -420,13 +506,34 @@ def getCharacterStatusfromselect(DataBase, showAvatarData, ScoreState, authorInf
     print(clockStatus)
     print(cupStatus)
     print(crownStatus)
+    
+    # GOOD形式への変換
+    good_artifacts = convert_to_good_format(flowerStatus, wingStatus, clockStatus, cupStatus, crownStatus)
+    # print("GOOD形式データ:")
+    # print(json.dumps(good_artifacts, ensure_ascii=False, indent=2))
+    
+    # GOOD形式データをファイルに保存
+    nowtime = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    good_data = {
+        "format": "GOOD",
+        "version": 2,
+        "source": "genshin-Artifacter",
+        "artifacts": good_artifacts
+    }
+    good_filename = f"Artifacter-GOOD-{nowtime}.json"
+    good_filepath = f"ArtifacterImageGen/{good_filename}"
+    
+    with open(good_filepath, 'w', encoding='utf-8') as f:
+        json.dump(good_data, f, ensure_ascii=False, indent=2)
+    
+    print(f"GOOD形式データを保存しました: {good_filepath}")
 
     Score = OutputScore(flowerStatus, wingStatus, clockStatus,
                         cupStatus, crownStatus, ScoreState)
     print(Score)
     print(Element)
 
-    return StatusList, WeaponStatus, flowerStatus, wingStatus, clockStatus, cupStatus, crownStatus, Score, Element
+    return StatusList, WeaponStatus, flowerStatus, wingStatus, clockStatus, cupStatus, crownStatus, Score, Element, good_filepath
 
 
 def calcScore(List, State):
@@ -477,7 +584,7 @@ def OutputScore(flower, wing, clock, cup, crown, State):
 
 
 def genJson(DataBase, showAvatarData, ScoreState, authorInfo):
-    status, weapon, flower, wing, clock, cup, crown, score, element = getCharacterStatusfromselect(
+    status, weapon, flower, wing, clock, cup, crown, score, element, good_filepath = getCharacterStatusfromselect(
         DataBase, showAvatarData, ScoreState, authorInfo)
 
     global CostuneID
@@ -720,3 +827,5 @@ def genJson(DataBase, showAvatarData, ScoreState, authorInfo):
 
     with open('ArtifacterImageGen/data.json', 'w', encoding='utf-8') as f:
         f.write(jsonCode)
+    
+    return good_filepath

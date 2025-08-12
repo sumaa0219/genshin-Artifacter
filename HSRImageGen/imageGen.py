@@ -4,6 +4,7 @@ from io import BytesIO
 import requests
 import json
 import re
+from HSRImageGen.HSR import getNamefromHash
 
 with open('API-docs/store/hsr/hsr.json', 'r', encoding="utf-8") as json_file:
     HSR = json.load(json_file)
@@ -107,7 +108,7 @@ def HSR_generate(language: str, charaInfoData: charaInfo, weaponInfo: weapon, re
     # ベースとなる画像を開く
     base = Image.open('HSRImageGen/assets/Base.png').convert('RGBA')
     draw = ImageDraw.Draw(base)
-    charaName = HSR[language][str(charaInfoData.nameHash)]
+    charaName = getNamefromHash(language, str(charaInfoData.nameHash))
     drawText(base, charaName, 45, 65, 25, (255, 255, 255))
     charaLevel = "Lv." + str(charaInfoData.level)
     drawText(base, charaLevel, 25, 65, 85, hex_to_rgb("#e4c992"))
@@ -181,7 +182,7 @@ def HSR_generate(language: str, charaInfoData: charaInfo, weaponInfo: weapon, re
         drawImage(base, 'HSRImageGen/assets/rank/' +
                   str(rarity) + '.png', 80, 970, size=(128, 45))
 
-        weaponName = HSR[language][str(weaponInfo.nameHash)]
+        weaponName = getNamefromHash(language, str(weaponInfo.nameHash))
         drawText(base, weaponName, 20, 230, 865, hex_to_rgb("#e4c992"))
 
         for i, status in enumerate(weaponInfo.statusList):
@@ -243,7 +244,7 @@ def HSR_generate(language: str, charaInfoData: charaInfo, weaponInfo: weapon, re
                       1460, 160+(i*165), size=(128, 45))
 
             # スコアの表示
-            score = str(round(relic.score, 1))
+            score = str(round(relic.score, 1)) if str(round(relic.score, 1)) != "0" else "0"
             drawText(base, "スコア",
                      17, 1815, 75+(i*170),  hex_to_rgb("#e4c992"))
             drawText(base, score,
@@ -314,7 +315,7 @@ def HSR_generate(language: str, charaInfoData: charaInfo, weaponInfo: weapon, re
     drawText(base, scoreRank, 40, 1220, 865, hex_to_rgb("#e4c992"))
     # セット効果の表示
     for i, set in enumerate(relicSetList):
-        drawText(base, re.sub(r'\{.*?\}', '', HSR[language][str(set.setNameHash)]),
+        drawText(base, re.sub(r'\{.*?\}', '', getNamefromHash(language, str(set.setNameHash))),
                  20, 600, 830+(i*70), hex_to_rgb("#e4c992"))
         count = str(set.setCount[len(set.setCount)-1])
         drawText(base, count + " セット",

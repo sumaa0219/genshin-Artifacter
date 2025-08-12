@@ -1,10 +1,11 @@
 import json
 import requests
+import re
 from pydantic import BaseModel
 
 myuid = 802620912
 
-with open('API-docs/store/hsr/honker_avatars.json', 'r', encoding="utf-8") as json_file:
+with open('API-docs/store/hsr/pfps.json', 'r', encoding="utf-8") as json_file:
     HSR_Avatars = json.load(json_file)
 
 with open('API-docs/store/hsr/hsr.json', 'r', encoding="utf-8") as json_file:
@@ -85,7 +86,11 @@ def getAvatorURL(avatorID: int):
 
 
 def getNamefromHash(language: str, hash: str):
-    return HSR_hash[language][hash]
+    result = HSR_hash[language][hash]
+    # {}で囲まれた部分を削除
+    name = re.sub(r'\{[^}]*\}', '', result)
+    print(f"getNamefromHash: {name}")
+    return name
 
 
 def getCharacaterInfo(charaID: str):
