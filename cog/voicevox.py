@@ -8,6 +8,7 @@ from collections import defaultdict, deque
 import re
 import io
 import requests
+import asyncio
 from mylogger import getLogger
 logger = getLogger(__name__)
 
@@ -38,6 +39,36 @@ class VoicevoxCog(commands.Cog):
     async def on_ready(self):
         print("Cog voicevox.py ready!")
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        """ボイスチャンネルの状態変更を監視"""
+        if member == self.bot.user:
+            return
+        
+        # ボットが接続しているチャンネルを確認
+        for guild in self.bot.guilds:
+            if guild.voice_client:
+                voice_channel = guild.voice_client.channel
+                # ボット以外にメンバーがいない場合、自動切断
+                members = [m for m in voice_channel.members if not m.bot]
+                if len(members) == 0:
+                    logger.info(f"Auto disconnect from {voice_channel} - no members left")
+                    try:
+                        await guild.voice_client.disconnect(force=True)
+                        connected_channel.pop(guild.id, None)
+                        vc_connected_channel.pop(guild.id, None)
+                    except Exception as e:
+                        logger.error(f"Error during auto disconnect: {e}")
+    
+    async def ensure_voice_connection(self, guild):
+        """音声接続の健全性をチェック"""
+        if guild.voice_client and not guild.voice_client.is_connected():
+            logger.warning(f"Voice connection lost for guild {guild.id}")
+            connected_channel.pop(guild.id, None)
+            vc_connected_channel.pop(guild.id, None)
+            return False
+        return True
+
     @app_commands.command(name="join", description="ボイスチャンネルに接続します")
     async def join(self, interaction: discord.Interaction):
         clear_queue(interaction.guild_id)
@@ -55,16 +86,54 @@ class VoicevoxCog(commands.Cog):
                               ] = interaction.channel_id
             vc_connected_channel[int(
                 interaction.guild_id)] = interaction.user.voice.channel.id
-            try:
-                print(f"接続中...{interaction.user.voice.channel}")
-                logger.info(
-                    f"Try to connect...{interaction.user.voice.channel}")
-                await interaction.user.voice.channel.connect(timeout=20, reconnect=True)
-                await interaction.response.send_message("接続しました")
-                logger.info(f"Connect complete")
+            
+            # 接続試行前に応答を送信
+            await interaction.response.defer(thinking=True)
+            
+            # 複数回の接続試行
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    print(f"接続中...{interaction.user.voice.channel} (試行 {attempt + 1}/{max_retries})")
+                    logger.info(f"Try to connect...{interaction.user.voice.channel} (attempt {attempt + 1})")
+                    
+                    # タイムアウトを短くして、forceを有効にする
+                    await interaction.user.voice.channel.connect(timeout=10, reconnect=False)
+                    await interaction.followup.send("接続しました")
+                    logger.info(f"Connect complete")
+                    return
 
-            except Exception as e:
-                print(e)
+                except discord.errors.ConnectionClosed as e:
+                    logger.warning(f"Connection closed (attempt {attempt + 1}): {e}")
+                    if e.code == 4006:  # Session no longer valid
+                        logger.info("WebSocket session invalid, waiting before retry...")
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(2)  # 2秒待機
+                        continue
+                    elif attempt < max_retries - 1:
+                        await asyncio.sleep(1)
+                        continue
+                    else:
+                        await interaction.followup.send("接続に失敗しました（WebSocket接続エラー）。しばらく待ってから再試行してください。", ephemeral=True)
+                        return
+                
+                except asyncio.TimeoutError:
+                    logger.warning(f"Connection timeout (attempt {attempt + 1})")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(1)
+                        continue
+                    else:
+                        await interaction.followup.send("接続がタイムアウトしました。ネットワーク接続を確認してください。", ephemeral=True)
+                        return
+                
+                except Exception as e:
+                    logger.error(f"Unexpected error during connection (attempt {attempt + 1}): {e}")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(1)
+                        continue
+                    else:
+                        await interaction.followup.send(f"接続に失敗しました: {str(e)}", ephemeral=True)
+                        return
 
     @app_commands.command(name="disconnect", description="ボイスチャンネルから切断します")
     async def disconnect(self, interaction: discord.Interaction):
@@ -72,12 +141,30 @@ class VoicevoxCog(commands.Cog):
             await interaction.response.send_message("ボイスチャンネルに接続していません", ephemeral=True)
             return
         
-        await interaction.response.send_message("切断しました")
-        await interaction.guild.voice_client.disconnect(force=True)
-        discord.AudioSource.cleanup(self)
-        logger.info(
-            f"Disconnect complete {interaction.guild.voice_client.channel}")
-        connected_channel.pop(interaction.guild_id, None)
+        try:
+            # 接続中のチャンネル情報を保存
+            channel_info = interaction.guild.voice_client.channel
+            
+            await interaction.response.send_message("切断しました")
+            await interaction.guild.voice_client.disconnect(force=True)
+            
+            # AudioSourceのクリーンアップ（selfではなくsourceがある場合のみ）
+            if hasattr(self, 'source') and self.source:
+                try:
+                    self.source.cleanup()
+                except:
+                    pass
+            
+            logger.info(f"Disconnect complete {channel_info}")
+            connected_channel.pop(interaction.guild_id, None)
+            vc_connected_channel.pop(interaction.guild_id, None)
+            
+        except Exception as e:
+            logger.error(f"Error during disconnect: {e}")
+            # エラーが発生してもクリーンアップは実行
+            connected_channel.pop(interaction.guild_id, None)
+            vc_connected_channel.pop(interaction.guild_id, None)
+            await interaction.response.send_message("切断処理中にエラーが発生しましたが、接続は解除されました", ephemeral=True)
 
     @app_commands.command(name="add", description="辞書に単語の読み方登録します")
     async def addWords(self, interaction: discord.Interaction, vocabulary: str, pronunciation: str):
