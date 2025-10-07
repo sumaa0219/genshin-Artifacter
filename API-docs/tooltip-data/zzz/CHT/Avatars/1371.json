@@ -3,6 +3,10 @@
     "ElementTypes": [
         "Ether"
     ],
+    "Specialty": {
+        "Id": 6,
+        "Name": "命破"
+    },
     "Talents": {
         "1": {
             "Title": "清靈道心",
@@ -196,7 +200,7 @@
                 "Param": "{Skill:1371024, Prop:1002}"
             },
             "137100048": {
-                "Description": "能量消耗",
+                "Description": "閃能消耗",
                 "Param": "40點"
             },
             "137100049": {
@@ -227,7 +231,7 @@
                 "Param": "{Skill:1371022, Prop:1002}"
             },
             "137100056": {
-                "Description": "能量消耗",
+                "Description": "發動所需閃能",
                 "Param": "40點"
             },
             "137100057": {
