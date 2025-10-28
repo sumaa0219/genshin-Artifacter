@@ -10,7 +10,7 @@
     "Talents": {
         "1": {
             "Title": "Período de Hibernação",
-            "Description": "Quando Seed atinge 100 pontos de <color=#FFFFFF>Vigor de Aço</color>, ative <color=#FFFFFF>Ataque Básico: Flores Caídas — Colapso</color> e o consumo total de <color=#FFFFFF>Vigor de Aço</color> é reduzido para 100 pontos.\nA quantidade de <color=#FFFFFF>Vigor de Aço</color> necessária para obter uma chance de lançar rápida do <color=#FFFFFF>Ataque Básico: Flores Caídas — Massacre</color> é reduzido para 100 pontos.\nAo entrar na batalha ou ativar um <color=#FFFFFF>Supremo</color>, ela obtém mais 40 ou 20 pontos de <color=#FFFFFF>Vigor de Aço</color>. O Dano CRIT de <color=#FFFFFF>Ataque Básico: Flores Caídas — Colapso</color> aumenta 30%.",
+            "Description": "Quando Seed atinge 100 pontos de <color=#FFFFFF>Vigor de Aço</color>, ative <color=#FFFFFF>Ataque Básico: Flores Caídas — Colapso</color> para reduzir o <color=#FFFFFF>Vigor de Aço</color> consumido para 100.\nA quantidade de <color=#FFFFFF>Vigor de Aço</color> necessária para obter uma chance de executar <color=#FFFFFF>Ataque Básico: Flores Caídas — Massacre</color> rapidamente é reduzida para 100 acúmulos.\nAo entrar em batalha ou ativar um <color=#FFFFFF>Supremo</color>, ela acumula mais 40 ou 20 pontos de <color=#FFFFFF>Vigor de Aço</color>. O Dano CRIT de <color=#FFFFFF>Ataque Básico: Flores Caídas — Colapso</color> aumenta 30%.",
             "Lore": "Este é um edifício solene e misterioso, isolado do mundo exterior.\nEla, a pura, pertence a este lugar. Ela se encolhe, espiando através da cerca de arame com muito cuidado. Como será o mundo exterior?\nSua curiosidade flui além da instalação estéril, atravessa as torres colapsadas e se esquiva das flores rosas gigantes no céu.\nFluindo cada vez mais além...\n\"Parece um ovo rachado e fedorento!\"\n\"Mas eu quero ficar aqui um pouco mais...\""
         },
         "2": {
@@ -55,7 +55,37 @@
         "MathSkill": {
             "Title": "Habilidade Extra: Ataque Surpresa",
             "Description": "Com outro personagem do tipo <color=#FFFFFF>Atacante</color> na equipe:\nQuando Seed causa dano como Agente ativa, o <color=#FFFFFF>Soldado Leal</color> recupera 2 de Energia. Esse efeito pode ser ativado uma vez a cada 1s.\nCom <color=#FFFFFF>Ataque Básico: Flores Caídas — Massacre</color>, <color=#FFFFFF>Ataque Básico: Flores Caídas — Colapso</color> e <color=#FFFFFF>Supremo: Jardim Mecânico — Florescimento!</color>, Seed causa 30% mais dano e ignora 25% da <color=#2EB6FF>resistência Elétrica</color> do inimigo."
-        }
+        },
+        "BaseProps": [
+            {
+                "21101": 0,
+                "12101": 0
+            },
+            {
+                "21101": 960,
+                "12101": 0
+            },
+            {
+                "21101": 960,
+                "12101": 25
+            },
+            {
+                "21101": 1920,
+                "12101": 25
+            },
+            {
+                "21101": 1920,
+                "12101": 50
+            },
+            {
+                "21101": 2880,
+                "12101": 50
+            },
+            {
+                "21101": 2880,
+                "12101": 75
+            }
+        ]
     },
     "SkillDescriptions": {
         "0": {

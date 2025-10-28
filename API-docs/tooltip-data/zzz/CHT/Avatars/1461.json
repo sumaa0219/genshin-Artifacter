@@ -10,7 +10,7 @@
     "Talents": {
         "1": {
             "Title": "「凍眠期」",
-            "Description": "「席德」<color=#FFFFFF>[鋼能]</color>達到100點時，即可發動<color=#FFFFFF>[普通攻擊：落華·崩墜]</color>且總計消耗的<color=#FFFFFF>[鋼能]</color>降低至100點。獲得一次快速釋放<color=#FFFFFF>[普通攻擊：落華·重戮]</color>機會所需的<color=#FFFFFF>[鋼能]</color>降低至100點。進入戰場/發動<color=#FFFFFF>[終結技]</color>時，額外獲得40/20點<color=#FFFFFF>[鋼能]</color>。<color=#FFFFFF>[普通攻擊：落華·崩墜]</color>造成的暴擊傷害提升30%。",
+            "Description": "「席德」<color=#FFFFFF>[鋼能]</color>達到100點時，即可發動<color=#FFFFFF>[普通攻擊：落華·崩墜]</color>且總計消耗的<color=#FFFFFF>[鋼能]</color>降低至100點。獲得一次快速釋放<color=#FFFFFF>[普通攻擊：落華·重戮]</color>機會所需的<color=#FFFFFF>[鋼能]</color>降低至100點。進入戰場/發動<color=#FFFFFF>[終結技]</color>時，額外累積40/20點<color=#FFFFFF>[鋼能]</color>。<color=#FFFFFF>[普通攻擊：落華·崩墜]</color>造成的暴擊傷害提升30%。",
             "Lore": "這是一處與外界隔絕的，肅穆而神秘的建築。\n潔白的她屬於這裡。她瑟縮著，小心翼翼地朝著鐵絲網外探出頭。外面的世界是什麼樣的呢？\n她的好奇心漫過無菌的房間，越過崩裂的高樓，躲開天空中粉色的巨花，流呀流……\n\n「看起來很像一個破殼的臭雞蛋呢～」\n「但我想在這待一會…」"
         },
         "2": {
@@ -55,7 +55,37 @@
         "MathSkill": {
             "Title": "額外能力：奇兵轟臨",
             "Description": "隊伍中包含其他<color=#FFFFFF>[強攻]</color>角色時觸發：\n「席德」作為操作中角色造成傷害時，為<color=#FFFFFF>[正兵]</color>回復2點能量，1秒內最多觸發一次。\n「席德」<color=#FFFFFF>[普通攻擊：落華·重戮]</color>，<color=#FFFFFF>[普通攻擊：落華·崩墜]</color>與<color=#FFFFFF>[終結技：機芯花園·綻放！]</color>造成的傷害提升30%，且無視敵人25%<color=#2EB6FF>電屬性傷害抗性</color>。"
-        }
+        },
+        "BaseProps": [
+            {
+                "21101": 0,
+                "12101": 0
+            },
+            {
+                "21101": 960,
+                "12101": 0
+            },
+            {
+                "21101": 960,
+                "12101": 25
+            },
+            {
+                "21101": 1920,
+                "12101": 25
+            },
+            {
+                "21101": 1920,
+                "12101": 50
+            },
+            {
+                "21101": 2880,
+                "12101": 50
+            },
+            {
+                "21101": 2880,
+                "12101": 75
+            }
+        ]
     },
     "SkillDescriptions": {
         "0": {

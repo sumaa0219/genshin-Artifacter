@@ -35,43 +35,47 @@ def updateGenshin_Character():
     with open('./API-docs/store/characters.json', 'r', encoding="utf-8") as json_file:
         characters = json.load(json_file)
     addedCharaList = []
-    for chara in characters:
-
-        name = convertNameGenshin(str(characters[chara]["NameTextMapHash"]))
-        dir = f"./ArtifacterImageGen/character/{name}"
-        if not os.path.exists(dir):
-            logger.warning(f"New character found: {name}")
-            logger.info(f"start to download character: {name}")
-            os.makedirs(dir)
-            # 画像の保存
-            # 凸画像
-            for i, name in enumerate(characters[chara]["Consts"]):
-                saveImage(name, dir+f"/{str(i+1)}.png")
-            # キャラ画像
-            charaENname = characters[chara]["SideIconName"].split("_")
-            charaBase = "UI_Gacha_AvatarImg_" + charaENname[3]
-            saveImage(charaBase, dir+"/avatar.png")
-            # スキル画像
-            for skill in characters[chara]["Skills"]:
-                type = characters[chara]["Skills"][skill].split("_")
-                if type[1] == "A":
-                    saveImage(characters[chara]["Skills"]
-                              [skill], dir+f"/通常.png")
-                elif type[1] == "S":
-                    saveImage(characters[chara]["Skills"]
-                              [skill], dir+f"/スキル.png")
-                elif type[1] == "E":
-                    saveImage(characters[chara]["Skills"]
-                              [skill], dir+f"/爆発.png")
-            addedCharaList.append(name)
-        # 　衣装画像
-        try:
-            if characters[chara]["Costumes"]:
-                for costume in characters[chara]["Costumes"]:
-                    saveImage(characters[chara]["Costumes"]
-                              [costume]["art"], dir+f"/{costume}.png")
+    for chara in characters.keys():
+        try :
+            name = convertNameGenshin(str(characters[chara]["NameTextMapHash"]))
+            dir = f"./ArtifacterImageGen/character/{name}"
+            print(dir)
+            if not os.path.exists(dir):
+                logger.warning(f"New character found: {name}")
+                logger.info(f"start to download character: {name}")
+                os.makedirs(dir)
+                # 画像の保存
+                # 凸画像
+                for i, name in enumerate(characters[chara]["Consts"]):
+                    saveImage(name, dir+f"/{str(i+1)}.png")
+                # キャラ画像
+                charaENname = characters[chara]["SideIconName"].split("_")
+                charaBase = "UI_Gacha_AvatarImg_" + charaENname[3]
+                saveImage(charaBase, dir+"/avatar.png")
+                # スキル画像
+                for skill in characters[chara]["Skills"]:
+                    type = characters[chara]["Skills"][skill].split("_")
+                    if type[1] == "A":
+                        saveImage(characters[chara]["Skills"]
+                                [skill], dir+f"/通常.png")
+                    elif type[1] == "S":
+                        saveImage(characters[chara]["Skills"]
+                                [skill], dir+f"/スキル.png")
+                    elif type[1] == "E":
+                        saveImage(characters[chara]["Skills"]
+                                [skill], dir+f"/爆発.png")
+                addedCharaList.append(name)
+            # 　衣装画像
+            try:
+                if characters[chara]["Costumes"]:
+                    for costume in characters[chara]["Costumes"]:
+                        saveImage(characters[chara]["Costumes"]
+                                [costume]["art"], dir+f"/{costume}.png")
+            except KeyError:
+                pass
         except KeyError:
-            pass
+            logger.error(f"KeyError: {chara}のデータが不完全です。")
+            continue
     return addedCharaList
 
 

@@ -16,7 +16,7 @@
         "2": {
             "Title": "L'exemple de la maîtresse",
             "Description": "Lorsque Rina devient le personnage contrôlé en combat, ses DGT augmentent de 15 % pendant 12 s. Cet effet peut être déclenché une fois toutes les 18 s.",
-            "Lore": "« Pour mener d'excellentes domestiques, il faut une excellente gouvernante, de même qu'il faut un maître exemplaire pour élever des Bangbou exemplaires. »\n– Extrait du discours de Rina lors du « Séminaire sur la formation des Bangbou et la gestion des ressources humaines de la société d'entretien Victoria »."
+            "Lore": "« Pour mener d'excellentes domestiques, il faut une excellente gouvernante, de même qu'il faut un maître exemplaire pour élever des Bangbou exemplaires. »\n– Extrait du discours de Rina lors du « Séminaire sur la formation des Bangbous et la gestion des ressources humaines de la société d'entretien Victoria »."
         },
         "3": {
             "Title": "Spécialité de la gouvernante",
@@ -55,7 +55,37 @@
         "MathSkill": {
             "Title": "Capacité supplémentaire : Banquet parfait",
             "Description": "Lorsqu'un autre personnage de votre escouade est du même attribut ou de la même faction que Rina :\nProlonge l'effet <color=#2EB6FF>Électrocution</color> infligé par les personnages de l'escouade de 3 s. Lorsqu'il y a des ennemis <color=#2EB6FF>électrocutés</color> sur le champ de bataille, les <color=#2EB6FF>DGT électriques</color> de tous les personnages de l'escouade augmentent de 10 %."
-        }
+        },
+        "BaseProps": [
+            {
+                "23101": 0,
+                "12101": 0
+            },
+            {
+                "23101": 480,
+                "12101": 0
+            },
+            {
+                "23101": 480,
+                "12101": 25
+            },
+            {
+                "23101": 960,
+                "12101": 25
+            },
+            {
+                "23101": 960,
+                "12101": 50
+            },
+            {
+                "23101": 1440,
+                "12101": 50
+            },
+            {
+                "23101": 1440,
+                "12101": 75
+            }
+        ]
     },
     "SkillDescriptions": {
         "0": {
