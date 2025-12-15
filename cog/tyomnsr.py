@@ -83,9 +83,8 @@ class TyomnsrCog(commands.Cog):
                         announceChannnel = self.bot.get_guild(
                             serverID).get_channel(announcementChannelID)
                         await announceChannnel.send(f"{message.author.mention} がLv.{level + 1}にレベルアップした！")
-                except:
-                    # message.channel.send(f"{message.author.display_name} はまだ登録されていません。")
-                    pass
+                except KeyError as e:
+                    logger.debug(f"User not registered in DB: {e}")
 
             if self.gomikasuFlag == True:
                 if message.content == "!gomikasu" or message.content == "ゴミカス" or message.content == "ごみかす":
@@ -147,7 +146,8 @@ class TyomnsrCog(commands.Cog):
             if str(user["userID"]) not in removeList:
                 try:
                     linkAccountList = user["link"]
-                except:
+                except KeyError as e:
+                    logger.debug(f"No linked accounts found for user: {e}")
                     linkAccountList = []
 
                 if len(linkAccountList) > 0:

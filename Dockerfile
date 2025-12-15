@@ -13,12 +13,12 @@ ENV TERM xterm
 RUN apt install -y git gcc libasound2-dev wget xz-utils curl
 
 
-RUN git clone https://github.com/EnkaNetwork/API-docs.git
-
-
 RUN mkdir -p /genshin-Artifacter
 COPY ./requirements.txt /genshin-Artifacter
 WORKDIR /genshin-Artifacter
+
+RUN git clone https://github.com/EnkaNetwork/API-docs.git
+
 
 RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools

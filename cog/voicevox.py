@@ -152,8 +152,8 @@ class VoicevoxCog(commands.Cog):
             if hasattr(self, 'source') and self.source:
                 try:
                     self.source.cleanup()
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Failed to cleanup audio source: {e}")
             
             logger.info(f"Disconnect complete {channel_info}")
             connected_channel.pop(interaction.guild_id, None)
@@ -406,7 +406,8 @@ def text_2_wav(text, speaker_id, max_retry=20):
                     if response.status_code == 200:
                         return response.content
                 raise ConnectionError('リトライ回数が上限に到達しました。')
-        except:
+        except Exception as e:
+            logger.error(f"Voicevox main server failed, trying sub server: {e}")
             response = requests.post(
                 f"{subVoicevoxURL}audio_query", params=query_payload, timeout=10)
             if response.status_code == 200:

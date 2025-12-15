@@ -21,7 +21,18 @@ def updateAPI():
 
 
 def convertNameGenshin(nameHash):
-    return nameItem["ja"][nameHash]
+    """ハッシュからまず日本語(`ja`)で取得し、存在しなければ英語(`en`)を返す。
+    両方に存在しない場合は KeyError を発生させる。"""
+    sid = str(nameHash)
+    try:
+        return nameItem["ja"][sid]
+    except KeyError:
+        # ja に無ければ en を試す
+        try:
+            return nameItem["en"][sid]
+        except KeyError:
+            logger.error(f"Name not found in ja/en for hash: {sid}")
+            raise
 
 
 def saveImage(name, path):

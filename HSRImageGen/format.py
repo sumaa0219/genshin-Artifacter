@@ -61,8 +61,9 @@ def formatCharaData(allCharaData):
 
     try:
         charaInfoData.rank = allCharaData["rank"]
-    except:
-        pass
+    except KeyError as e:
+        logger.debug(f"Character rank not found: {e}")
+        charaInfoData.rank = 0
 
     levelCorrection = 1
     charaInfoData.HP = float(HSR_meta["avatar"][str(charaInfoData.nameID)][str(charaInfoData.promotion)]["HPBase"]) + float(
@@ -139,9 +140,10 @@ def formatCharaData(allCharaData):
                 )
                 addStatus(statusInfos, statusdata.type, statusdata.value)
                 weaponInfo.addedStatusList.append(statusdata)
-        except:
-            pass
-    except:
+        except (KeyError, TypeError) as e:
+            logger.debug(f"Weapon additional status not found: {e}")
+    except Exception as e:
+        logger.error(f"Failed to get weapon info: {e}")
         weaponInfo = None
 
     # 遺物情報の取得
@@ -166,8 +168,9 @@ def formatCharaData(allCharaData):
             )
             try:
                 relicInfo.level = relicData["level"]
-            except:
-                pass
+            except KeyError as e:
+                logger.debug(f"Relic level not found: {e}")
+                relicInfo.level = 0
             relicInfo.type = str(relicData["type"])
             relicInfo.mainStatus.type = relicData["_flat"]["props"][0]["type"]
             relicInfo.mainStatus.value = relicData["_flat"]["props"][0]["value"]
@@ -192,7 +195,8 @@ def formatCharaData(allCharaData):
                 relicInfo.score = 0  # Default score if calculation fails
                 relicList.append(relicInfo)  # Add relic even if score calculation fails
                 continue
-    except:
+    except Exception as e:
+        logger.error(f"Failed to get relic info: {e}")
         relicList = []
 
     rank = charaInfoData.rank
@@ -236,10 +240,11 @@ def formatCharaData(allCharaData):
                     )
                     addStatus(statusInfos, statusdata.type, statusdata.value)
                     skillInfo.addedStatusList.append(statusdata)
-            except:
-                pass
+            except (KeyError, TypeError) as e:
+                logger.debug(f"Skill added status not found: {e}")
             skillList.append(skillInfo)
-    except:
+    except Exception as e:
+        logger.error(f"Failed to get skill info: {e}")
         skillList = []
 
     # 遺物セット効果の取得
@@ -283,10 +288,11 @@ def formatCharaData(allCharaData):
                                 addStatus(statusInfos, statusdata.type,
                                           statusdata.value)
                                 setListInfo.setEffectlist.append(statusdata)
-                    except:
-                        pass
+                    except (KeyError, TypeError) as e:
+                        logger.debug(f"Relic set effect not found: {e}")
                 relicSetList.append(setListInfo)
-    except:
+    except Exception as e:
+        logger.error(f"Failed to get relic set info: {e}")
         relicSetList = []
 
     # print(charaInfoData, statusInfos)

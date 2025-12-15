@@ -57,8 +57,8 @@ class GenshinCog(commands.Cog):
         try:
             print(
                 f"<Genshin buid command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
-        except:
-            pass
+        except AttributeError as e:
+            logger.debug(f"Guild/Channel info unavailable: {e}")
 
         self.modeFlag = 0
         self.defaultUser = interaction.user.id
@@ -99,8 +99,8 @@ class GenshinCog(commands.Cog):
                 try:
                     shutil.rmtree("ArtifacterImageGen/character/" +
                                   x[2]+"(" + interaction.user.name+")")
-                except:
-                    pass
+                except (FileNotFoundError, OSError) as e:
+                    logger.warning(f"Failed to delete character directory: {e}")
                 User_UID_Data[i][2] = None
                 pd.DataFrame(User_UID_Data).to_csv(
                     "./assetData/user_UID_data.csv", index=False, header=False)
@@ -145,7 +145,7 @@ class SelectCharacter(ui.View):
                     self.cog.selectCharacterID)]["avatarId"]
                 selectCharaHashID = characters[str(
                     selectCharaID)]["NameTextMapHash"]
-                Name = nameItem["ja"][str(selectCharaHashID)]
+                Name = nameItem["ja"].get(str(selectCharaHashID), nameItem["en"].get(str(selectCharaHashID), "???"))
 
                 User_UID_Data = pd.read_csv(
                     "./assetData/user_UID_data.csv", header=None).values.tolist()
@@ -191,7 +191,7 @@ class SelectScoreState(ui.View):
             selectCharaHashID = characters[str(
                 selectCharaID)]["NameTextMapHash"]
 
-            self.cog.Name = nameItem["ja"][str(selectCharaHashID)]
+            self.cog.Name = nameItem["ja"].get(str(selectCharaHashID), nameItem["en"].get(str(selectCharaHashID), "???"))
             if self.cog.Name == "旅人":
                 TravelerElementID = self.cog.DataBase["skillDepotId"]
                 TravelerElement = characters[str(
@@ -302,7 +302,7 @@ class InputUID(ui.Modal):
             for x in self.cog.showAvatarlist:
                 charaID = x["avatarId"]
                 HashID = characters[str(charaID)]["NameTextMapHash"]
-                charaName = nameItem["ja"][str(HashID)]
+                charaName = nameItem["ja"].get(str(HashID), nameItem["en"].get(str(HashID), "???"))
                 charaLv = x["level"]
                 showCharaNameList.append(charaName)
                 showCharaLevelList.append(charaLv)
@@ -357,8 +357,8 @@ def setOriginalCharacter(url, mode, Name, userName, beforName=None):
         try:
             shutil.rmtree("ArtifacterImageGen/character/" +
                           beforName + "(" + userName + ")")
-        except:
-            pass
+        except (FileNotFoundError, OSError) as e:
+            logger.debug(f"Previous character directory not found (expected behavior): {e}")
 
     background.save(save_path)
 

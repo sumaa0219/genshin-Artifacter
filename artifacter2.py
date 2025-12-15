@@ -26,6 +26,22 @@ with open('assetData/good_conversion_mapping.json', 'r', encoding="utf-8") as js
     good_mapping = json.load(json_file)
 
 
+def get_name_item(hash_id):
+    """ハッシュIDからまず日本語(`ja`)を参照し、なければ英語(`en`)を返す。どちらも無ければ '???' を返す。"""
+    sid = str(hash_id)
+    try:
+        if isinstance(nameItem, dict) and "ja" in nameItem and sid in nameItem["ja"]:
+            return nameItem["ja"][sid]
+    except Exception as e:
+        logger.debug(f"get_name_item ja lookup error for {sid}: {e}")
+    try:
+        if isinstance(nameItem, dict) and "en" in nameItem and sid in nameItem["en"]:
+            return nameItem["en"][sid]
+    except Exception as e:
+        logger.debug(f"get_name_item en lookup error for {sid}: {e}")
+    return "???"
+
+
 GUID = 0
 
 def get_slot_from_position(position):
@@ -162,7 +178,8 @@ def getData(UID):
         ProfileAvatarname = characters[str(ProfileAvatarID)]["SideIconName"]
         name = ProfileAvatarname.split("_")
         AvatarNameURL = baseURL + name[0] + "_" + name[1]+"_"+name[3]+".png"
-    except:
+    except (KeyError, IndexError) as e:
+        logger.warning(f"Failed to get ProfileAvatarURL: {e}")
         AvatarNameURL = None
 
     PlayerInfo.append(PlayerName)
@@ -191,7 +208,7 @@ def getCharacterStatusfromselect(DataBase, showAvatarData, ScoreState, authorInf
     selectCharaID = DataBase["avatarId"]
     characterDataBase = characters[str(selectCharaID)]
     selectCharaHashID = characterDataBase["NameTextMapHash"]
-    Name = nameItem["ja"][str(selectCharaHashID)]
+    Name = get_name_item(selectCharaHashID)
     if Name == "旅人":  # 主人公の元素判断
         TravelerElementID = DataBase["skillDepotId"]
         characterDataBase = characters[str(
@@ -366,7 +383,7 @@ def getCharacterStatusfromselect(DataBase, showAvatarData, ScoreState, authorInf
     WeaponNameID = Weapon["flat"]["nameTextMapHash"]
     itemPath = Weapon["flat"]["icon"]
     update.checkUpdateGenshin_weapon(WeaponNameID, itemPath)
-    WeaponName = nameItem["ja"][str(WeaponNameID)]
+    WeaponName = get_name_item(WeaponNameID)
 
     # WeponBaseData
     WeaponBaseData = Weapon["weapon"]
@@ -392,7 +409,7 @@ def getCharacterStatusfromselect(DataBase, showAvatarData, ScoreState, authorInf
         else:
             # WeaponSubStatusName
             WeaponSubStatusName = x["appendPropId"]
-            WeaponSubStatusName = nameItem["ja"][str(WeaponSubStatusName)]
+            WeaponSubStatusName = get_name_item(WeaponSubStatusName)
 
             # WeaponSubStatusValue
             WeaponSubStatusValue = x["statValue"]
@@ -434,7 +451,7 @@ def getCharacterStatusfromselect(DataBase, showAvatarData, ScoreState, authorInf
 
         # ArtifactType
         setNameID = x["flat"]["setNameTextMapHash"]
-        ArtifactType = nameItem["ja"][str(setNameID)]
+        ArtifactType = get_name_item(setNameID)
         update.checkUpdateGenshin_relic(
             TypeArtifactID, x["flat"]["icon"], setNameID)
         print(TypeArtifactID, x["flat"]["icon"], setNameID)

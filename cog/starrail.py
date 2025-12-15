@@ -35,8 +35,8 @@ class StarrailCog(commands.Cog):
             "./assetData/user_UID_data_hsr.csv", header=None).values.tolist()
         try:
             print(f"<HSR buid command>\n**{interaction.guild.name}**:{interaction.guild_id}\n**{interaction.channel.name}**:{interaction.channel_id}\n**userName**:{interaction.user.name}  **userID**:{interaction.user.id}")
-        except:
-            pass
+        except AttributeError as e:
+            logger.debug(f"Guild/Channel info unavailable: {e}")
 
         self.default_user = interaction.user.id
         self.default_HSR_UID = 0
@@ -92,7 +92,8 @@ class InputHSRUID(ui.Modal):
             try:
                 playerInfo, showCharaInfoList = HSR.getInfo(
                     int(self.uid.value))
-            except:
+            except Exception as e:
+                logger.error(f"Failed to get HSR player info: {e}")
                 errer_msg = HSR.getInfo(
                     int(self.uid.value))
                 await interaction.response.send_message(errer_msg)
